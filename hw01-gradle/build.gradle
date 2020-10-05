@@ -6,10 +6,6 @@ plugins {
     id 'application'
 }
 
-dependencies {
-    implementation 'com.google.guava:guava:28.1-jre'
-}
-
 application {
     // Define the main class for the application.
     mainClassName = 'ru.otus.App'
