@@ -29,7 +29,7 @@ allprojects {
 
     dependencyManagement {
         dependencies {
-            dependency("com.google.guava:guava:${rootProject.ext.get("com.google.guava.version")}")
+            dependency("com.google.guava:guava:${rootProject.ext["com.google.guava.version"]}")
         }
     }
 
