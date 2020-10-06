@@ -22,4 +22,3 @@ shadowJar {
         attributes 'Main-Class': 'ru.otus.HelloOtus'
     }
 }
-
