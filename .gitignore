@@ -30,4 +30,6 @@ out
 
 #Idea
 .idea
-
+*.iml
+*.ipr
+*.iws
