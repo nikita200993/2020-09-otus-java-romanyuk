@@ -1,40 +1,42 @@
 plugins {
-  id 'idea'
-  id "io.spring.dependency-management" version "1.0.10.RELEASE"
-  id 'com.github.johnrengelman.shadow' version '6.0.0' apply false
+    id 'idea'
+    id "io.spring.dependency-management" version "1.0.10.RELEASE"
+    id 'com.github.johnrengelman.shadow' version '6.0.0' apply false
 }
+
+ext.set("com.google.guava.version", "29.0-jre")
 
 idea {
 
-  project {
-    languageLevel = 15
-  }
+    project {
+        languageLevel = 15
+    }
 
-  module {
-    downloadJavadoc = true
-    downloadSources = true
-  }
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
 }
 
 allprojects {
-  group "ru.otus"
+    group "ru.otus"
 
-  repositories {
-    mavenCentral()
-  }
-
-  apply plugin: "io.spring.dependency-management"
-
-  dependencyManagement {
-    dependencies {
-      dependency("com.google.guava:guava:29.0-jre")
+    repositories {
+        mavenCentral()
     }
-  }
 
-  configurations.all {
-    resolutionStrategy {
-      failOnVersionConflict()
+    apply plugin: "io.spring.dependency-management"
+
+    dependencyManagement {
+        dependencies {
+            dependency("com.google.guava:guava:${rootProject.ext.get("com.google.guava.version")}")
+        }
     }
-  }
+
+    configurations.all {
+        resolutionStrategy {
+            failOnVersionConflict()
+        }
+    }
 }
 
