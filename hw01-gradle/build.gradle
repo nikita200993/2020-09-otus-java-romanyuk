@@ -1,0 +1,24 @@
+plugins {
+    // Apply the java plugin to add support for Java
+    id 'java'
+
+    id 'com.github.johnrengelman.shadow'
+}
+
+dependencies {
+    implementation 'com.google.guava:guava'
+}
+
+compileJava {
+    sourceCompatibility = '15'
+    targetCompatibility = '15'
+}
+
+shadowJar {
+    archiveBaseName.set('gradleHelloWorld')
+    archiveVersion.set('0.1')
+    archiveClassifier.set('')
+    manifest {
+        attributes 'Main-Class': 'ru.otus.HelloOtus'
+    }
+}
