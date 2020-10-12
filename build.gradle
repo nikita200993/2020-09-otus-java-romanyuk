@@ -5,6 +5,7 @@ plugins {
 }
 
 ext.set("com.google.guava.version", "29.0-jre")
+ext.set("org.junit.jupiter.version", "5.7.0")
 
 idea {
 
@@ -30,6 +31,10 @@ allprojects {
     dependencyManagement {
         dependencies {
             dependency("com.google.guava:guava:${rootProject.ext["com.google.guava.version"]}")
+            dependency("org.junit.jupiter:junit-jupiter-api:"
+                    + "${rootProject.ext["org.junit.jupiter.version"]}")
+            dependency("org.junit.jupiter:junit-jupiter-engine:"
+                    + "${rootProject.ext["org.junit.jupiter.version"]}")
         }
     }
 
