@@ -14,6 +14,7 @@ public class DIYArrayList<V> implements List<V> {
 
     private static final int GROWTH_SHIFT = 1;
 
+    // all lists initially share the same backing array
     private static final Object[] EMPTY = new Object[0];
 
     private int size;
@@ -23,7 +24,7 @@ public class DIYArrayList<V> implements List<V> {
     @SuppressWarnings("unchecked")
     public DIYArrayList() {
         size = 0;
-        backingArray = (V[]) new Object[DEFAULT_INITIAL_CAPACITY];
+        backingArray = (V[]) EMPTY;
     }
 
     @Override
@@ -60,9 +61,12 @@ public class DIYArrayList<V> implements List<V> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean add(final V v) {
-        if (size >= capacity()) {
-            backingArray = grow(size + 1);
+        if (backingArray == EMPTY) {
+            backingArray = (V[]) new Object[DEFAULT_INITIAL_CAPACITY];
+        } else if (size >= capacity()) {
+            backingArray = grow();
         }
         backingArray[size++] = v;
         return true;
@@ -156,18 +160,15 @@ public class DIYArrayList<V> implements List<V> {
         return backingArray.length;
     }
 
-    private V[] grow(final int necessaryCapacity) {
-        if (necessaryCapacity < 0) {
-            throw new OutOfMemoryError(
-                    "Required capacity is negative due to integer overflow."
-                            + " Can't hold more than 2^31 - 1 elements"
-            );
+    private V[] grow() {
+        if (capacity() == Integer.MAX_VALUE) {
+            throw new OutOfMemoryError();
         }
-        final int defaultGrowthCapacity = capacity() + capacity() >> GROWTH_SHIFT;
+        final int defaultGrowthCapacity = capacity() + (capacity() >> GROWTH_SHIFT);
         final int desiredCapacity = defaultGrowthCapacity < 0
                 ? Integer.MAX_VALUE
                 : defaultGrowthCapacity;
-        return Arrays.copyOf(backingArray, Math.max(necessaryCapacity, desiredCapacity));
+        return Arrays.copyOf(backingArray, desiredCapacity);
     }
 
     private void checkIndex(final int index) {
