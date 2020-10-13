@@ -203,7 +203,7 @@ public class DIYArrayList<V> implements List<V> {
 
     @Override
     public int hashCode() {
-        // initialize to remove collisions of null lists with different sizes;
+        // initialize to 1 to remove collisions of null lists with different sizes;
         int hash = 1;
         for (int i = 0; i < size; i++) {
             final Object objectToHash = backingArray[i];
