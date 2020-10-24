@@ -17,6 +17,7 @@ public class ReflectionUtils {
             final Object... args)
     {
         Contracts.requireNonNullArgument(method);
+
         try {
             return method.invoke(receiver, args);
         } catch (final IllegalAccessException | InvocationTargetException ex) {
@@ -24,11 +25,12 @@ public class ReflectionUtils {
         }
     }
 
-    public static <T> T invokeConstructor(final Constructor<T> constructor, final Object receiver, final Object... args)
+    public static <T> T invokeConstructor(final Constructor<T> constructor, final Object... args)
     {
         Contracts.requireNonNullArgument(constructor);
+
         try {
-            return constructor.newInstance(receiver, args);
+            return constructor.newInstance(args);
         } catch (final IllegalAccessException
                 | InvocationTargetException
                 | InstantiationException ex) {
