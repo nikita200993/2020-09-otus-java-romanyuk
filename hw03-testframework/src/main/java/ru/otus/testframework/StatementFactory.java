@@ -71,7 +71,8 @@ class StatementFactory {
         }
     }
 
-    private static Exception extractCauseOrRethrowIfNotAnException(final Exception exception) {
+    private static Exception extractCauseOrRethrowIfNotAnException(final Exception exception)
+    {
         final Throwable cause = exception.getCause();
         if (cause instanceof Exception) {
             return (Exception) cause;
