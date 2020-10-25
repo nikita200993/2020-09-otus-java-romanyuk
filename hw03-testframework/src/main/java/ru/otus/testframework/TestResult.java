@@ -36,7 +36,7 @@ class TestResult {
         return testName;
     }
 
-    void assertionFailed(final AssertionFailure exception)
+    void assertionFailed(final Exception exception)
     {
         forbidAnyFlagIsRaised();
         forbidExceptionIsSet();
