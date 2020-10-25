@@ -14,7 +14,7 @@ public class ReflectionUtils {
     public static Object invokeMethod(
             final Method method,
             final Object receiver,
-            final Object... args)
+            final Object... args) throws RuntimeException
     {
         Contracts.requireNonNullArgument(method);
 
@@ -25,7 +25,9 @@ public class ReflectionUtils {
         }
     }
 
-    public static <T> T invokeConstructor(final Constructor<T> constructor, final Object... args)
+    public static <T> T invokeConstructor(
+            final Constructor<T> constructor,
+            final Object... args) throws RuntimeException
     {
         Contracts.requireNonNullArgument(constructor);
 
