@@ -11,7 +11,7 @@ public class Assertions {
         if (!Objects.equals(expected, actual)) {
             throw new AssertionFailure(
                     String.format(
-                            "Objects are not equals:%nExpected = %s%nActual = %s",
+                            "Objects are not equal:%nExpected = %s%nActual = %s",
                             expected,
                             actual
                     )
