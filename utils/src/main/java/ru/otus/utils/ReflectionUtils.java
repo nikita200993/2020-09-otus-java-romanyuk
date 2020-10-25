@@ -20,8 +20,13 @@ public class ReflectionUtils {
 
         try {
             return method.invoke(receiver, args);
-        } catch (final IllegalAccessException | InvocationTargetException ex) {
+        } catch (final IllegalAccessException ex) {
             throw new RuntimeException("Couldn't invoke method " + method, ex);
+        } catch (final InvocationTargetException ex) {
+            throw new RuntimeException(
+                    "Invoked method " + method + " thrown exception",
+                    ex.getCause()
+            );
         }
     }
 
@@ -33,10 +38,13 @@ public class ReflectionUtils {
 
         try {
             return constructor.newInstance(args);
-        } catch (final IllegalAccessException
-                | InvocationTargetException
-                | InstantiationException ex) {
+        } catch (final IllegalAccessException | InstantiationException ex) {
             throw new RuntimeException("Couldn't invoke constructor " + constructor, ex);
+        } catch (final InvocationTargetException ex) {
+            throw new RuntimeException(
+                    "Invoked constructor " + constructor + " thrown exception",
+                    ex.getCause()
+            );
         }
     }
 }
