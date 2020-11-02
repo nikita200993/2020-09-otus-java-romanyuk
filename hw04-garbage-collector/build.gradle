@@ -6,3 +6,7 @@ compileJava {
     sourceCompatibility = '15'
     targetCompatibility = '15'
 }
+
+dependencies {
+    implementation project(":utils")
+}
