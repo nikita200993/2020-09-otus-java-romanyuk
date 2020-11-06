@@ -8,6 +8,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.Method;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -42,9 +43,9 @@ class LoggingInserter extends AdviceAdapter {
             return;
         }
         getStatic(
-                Type.getObjectType("java/lang/System"),
+                Type.getType(System.class),
                 "out",
-                Type.getObjectType("java/io/PrintStream"));
+                Type.getType(PrintStream.class));
         loadArgs();
         visitInvokeDynamicInsn(
                 "makeConcatWithConstants",
@@ -52,7 +53,7 @@ class LoggingInserter extends AdviceAdapter {
                 getBootstrapMethodHandleForStringConcatWithConstants(),
                 getTemplateStringForStringConcatDynamicInstr(getArgumentTypes().length));
         invokeVirtual(
-                Type.getObjectType("java/io/PrintStream"),
+                Type.getType(PrintStream.class),
                 Method.getMethod("void println(String)"));
     }
 
