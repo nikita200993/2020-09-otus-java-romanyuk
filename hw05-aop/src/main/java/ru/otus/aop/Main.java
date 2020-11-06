@@ -7,7 +7,6 @@ import java.util.Map;
 public class Main {
 
     public static void main(final String[] args) {
-        System.out.println("main");
         new Main().funcToLogOne(2L, "hi");
         funcToLogTwo(1, new Main(), 2.0, Map.of("key", "value"));
         new Main().funcNotToLog(2);
