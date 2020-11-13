@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow'
+}
+
+compileJava {
+    sourceCompatibility = '15'
+    targetCompatibility = '15'
+}
+
+dependencies {
+    implementation "org.ow2.asm:asm-commons"
+}
+
+task shadowLoggingAgent(type: Jar, dependsOn: shadowJar) {
+    archiveBaseName.set('proxyDemo')
+    manifest {
+        attributes 'Main-Class': 'ru.otus.aop.Main'
+        attributes 'Premain-Class': 'ru.otus.aop.LoggingAgent'
+    }
+    from zipTree(shadowJar.archiveFile)
+}
