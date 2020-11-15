@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public class BankStorageImplTest {
+public class BanknoteStorageImplTest {
 
     private final BanknoteStorage storage = new BanknoteStorageImpl(
             Map.of(
@@ -30,14 +30,14 @@ public class BankStorageImplTest {
     }
 
     @Test
-    public void testTakeThrowCase() {
+    public void testTake_NoSuchElementException() {
         Assertions.assertThrows(
                 NoSuchElementException.class,
                 () -> storage.take(Nominal.TWO_HUNDRED));
     }
 
     @Test
-    public void testTakeNormalCase() {
+    public void testTake_NormalCase() {
         final Nominal nominal = Nominal.ONE_HUNDRED;
         final int banknotesAmountBefore = storage.banknoteAmount(nominal);
         final Banknote banknote = storage.take(nominal);
