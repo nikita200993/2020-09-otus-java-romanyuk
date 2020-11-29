@@ -28,4 +28,8 @@ public class MessageHistoryHolder implements Listener {
         }
         correspondingHistory.addLast(newMsg);
     }
+
+    public Map<Long, Deque<Message>> getIdToHistory() {
+        return idToHistory;
+    }
 }
