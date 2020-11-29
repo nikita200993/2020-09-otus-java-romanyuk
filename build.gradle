@@ -8,6 +8,8 @@ ext.set("com.google.guava.version", "29.0-jre")
 ext.set("org.junit.jupiter.version", "5.7.0")
 ext.set("org.ow2.asm.version", "8.0")
 ext.set("com.google.code.findbugs.version", "3.0.2")
+ext.set("org.assertj.version", "3.18.0")
+ext.set("org.mockito.version", "3.6.0")
 
 idea {
 
@@ -41,6 +43,12 @@ allprojects {
                     + "${rootProject.ext["org.ow2.asm.version"]}")
             dependency("com.google.code.findbugs:jsr305:"
                     + "${rootProject.ext["com.google.code.findbugs.version"]}")
+            dependency("org.mockito:mockito-core:"
+                    + "${rootProject.ext["org.mockito.version"]}")
+            dependency("org.mockito:mockito-junit-jupiter:"
+                    + "${rootProject.ext["org.mockito.version"]}")
+            dependency("org.assertj:assertj-core:"
+                    + "${rootProject.ext["org.assertj.version"]}")
         }
     }
 
