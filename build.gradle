@@ -7,6 +7,7 @@ plugins {
 ext.set("com.google.guava.version", "29.0-jre")
 ext.set("org.junit.jupiter.version", "5.7.0")
 ext.set("org.ow2.asm.version", "8.0")
+ext.set("com.google.code.findbugs.version", "3.0.2")
 
 idea {
 
@@ -38,6 +39,8 @@ allprojects {
                     + "${rootProject.ext["org.junit.jupiter.version"]}")
             dependency("org.ow2.asm:asm-commons:"
                     + "${rootProject.ext["org.ow2.asm.version"]}")
+            dependency("com.google.code.findbugs:jsr305:"
+                    + "${rootProject.ext["com.google.code.findbugs.version"]}")
         }
     }
 
