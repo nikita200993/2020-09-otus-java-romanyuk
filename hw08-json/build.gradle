@@ -16,6 +16,9 @@ test {
 
 dependencies {
     implementation project(":utils")
+    implementation "javax.json:javax.json-api"
+    implementation "com.google.code.gson:gson"
+    implementation "com.google.code.findbugs:jsr305"
     testImplementation "org.junit.jupiter:junit-jupiter-api"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
     testImplementation "org.mockito:mockito-core"
