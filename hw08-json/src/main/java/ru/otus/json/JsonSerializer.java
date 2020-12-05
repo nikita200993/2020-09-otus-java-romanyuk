@@ -4,10 +4,16 @@ package ru.otus.json;
 import ru.otus.utils.ReflectionUtils;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JsonSerializer {
+
+    private final Map<Class<?>, List<Field>> cache = new HashMap<>();
 
     public String serialize(final Object object) {
         final var builder = new StringBuilder();
@@ -34,8 +40,29 @@ public class JsonSerializer {
             final Collection<?> collection = (Collection<?>) object;
             serialize(stringBuilder, collection.toArray());
         } else {
-            throw new SerializationInvalidClassPassed("Class is unsupported " + object.getClass());
+            serializeObject(stringBuilder, object);
         }
+    }
+
+    private void serializeObject(final StringBuilder stringBuilder, final Object object) {
+        if (!cache.containsKey(object.getClass())) {
+            cache.put(
+                    object.getClass(),
+                    ReflectionUtils.getInstanceFieldsStream(object.getClass())
+                            .map(ReflectionUtils::asAccessible)
+                            .collect(Collectors.toList())
+            );
+        }
+        final List<Field> instanceFields = cache.get(object.getClass());
+        stringBuilder.append('{');
+        for (final Field field : instanceFields) {
+            serializeCharacterOrString(stringBuilder, field.getName());
+            stringBuilder.append(':');
+            serialize(stringBuilder, ReflectionUtils.getFieldValue(field, object));
+            stringBuilder.append(',');
+        }
+        removeLastCharIfEquals(stringBuilder, ',');
+        stringBuilder.append('}');
     }
 
     private void serializeArray(final StringBuilder stringBuilder, final Object array) {
@@ -64,18 +91,20 @@ public class JsonSerializer {
             serialize(stringBuilder, value);
             stringBuilder.append(',');
         }
-        final int length = stringBuilder.length();
-        if (stringBuilder.charAt(length - 1) == ',') {
-            stringBuilder.deleteCharAt(length - 1);
-        }
+        removeLastCharIfEquals(stringBuilder, ',');
         stringBuilder.append('}');
     }
 
-    private void serializeCharacterOrString(
-            final StringBuilder stringBuilder,
-            final Object object) {
+    private void serializeCharacterOrString(final StringBuilder stringBuilder, final Object object) {
         stringBuilder.append('"')
                 .append(object)
                 .append('"');
+    }
+
+    private static void removeLastCharIfEquals(final StringBuilder stringBuilder, final char aChar) {
+        final int length = stringBuilder.length();
+        if (stringBuilder.charAt(length - 1) == aChar) {
+            stringBuilder.deleteCharAt(length - 1);
+        }
     }
 }
