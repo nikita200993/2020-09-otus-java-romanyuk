@@ -1,8 +1,12 @@
 package ru.otus.utils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class ReflectionUtils {
 
@@ -58,5 +62,33 @@ public class ReflectionUtils {
                 || clazz.equals(Boolean.class)
                 || clazz.equals(Byte.class)
                 || clazz.equals(Character.class);
+    }
+
+    public static Stream<Field> getInstanceFieldsStream(final Class<?> clazz) {
+        Contracts.requireNonNullArgument(clazz);
+
+        return Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> !Modifier.isStatic(field.getModifiers()));
+    }
+
+    public static Field asAccessible(final Field field) {
+        Contracts.requireNonNullArgument(field);
+
+        field.setAccessible(true);
+        return field;
+    }
+
+    public static Object getFieldValue(final Field field, final Object object) {
+        Contracts.requireNonNullArgument(field);
+        Contracts.requireNonNullArgument(object);
+
+        try {
+            return field.get(object);
+        } catch (final IllegalAccessException e) {
+            throw new RuntimeException("Unable to extract field "
+                    + field
+                    + " from object of class "
+                    + object.getClass());
+        }
     }
 }
