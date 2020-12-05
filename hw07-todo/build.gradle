@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+compileJava {
+    sourceCompatibility = '15'
+    targetCompatibility = '15'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+dependencies {
+    implementation project(":utils")
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.mockito:mockito-junit-jupiter"
+}
