@@ -4,15 +4,24 @@ import com.google.gson.Gson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 // all boxed tests also test primitive, because I pass primitive literal to methods.
 public class JsonSerializerTest {
 
     private final JsonSerializer jsonSerializer = new JsonSerializer();
     private final Gson gson = new Gson();
+
+    @Test
+    void testSerializationOfObject() {
+        final TestClass testClass = new TestClass();
+        final String jsonString = jsonSerializer.serialize(testClass);
+        Assertions.assertEquals(testClass, gson.fromJson(jsonString, TestClass.class));
+    }
 
     @Test
     void testNull() {
@@ -115,10 +124,44 @@ public class JsonSerializerTest {
         Assertions.assertEquals(jsonStringExpected, jsonStringActual);
     }
 
-    @Test
-    void testThatThrowsIfUnsupportedClassPassed() {
-        Assertions.assertThrows(
-                SerializationInvalidClassPassed.class,
-                () -> jsonSerializer.serialize(new Object()));
+    private static class TestClass {
+        private String first = "first";
+        private String second = "second";
+        private Map<String, Object> map = Map.of("a", "b", "c", List.of("a"));
+        private int[] intArray = new int[]{1, 2, 3};
+        private String[] stringArray = new String[]{"a", "b"};
+        private long aLong = 1L;
+        private Long aBoxedLong = 1L;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TestClass testClass = (TestClass) o;
+            return aLong == testClass.aLong && Objects.equals(first, testClass.first) && Objects.equals(second, testClass.second) && Objects.equals(map, testClass.map) && Arrays.equals(intArray, testClass.intArray) && Arrays.equals(stringArray, testClass.stringArray) && Objects.equals(aBoxedLong, testClass.aBoxedLong);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(first, second, map, aLong, aBoxedLong);
+            result = 31 * result + Arrays.hashCode(intArray);
+            result = 31 * result + Arrays.hashCode(stringArray);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TestClass{" +
+                    "first='" + first + '\'' +
+                    ", second='" + second + '\'' +
+                    ", map=" + map +
+                    ", intArray=" + Arrays.toString(intArray) +
+                    ", stringArray=" + Arrays.toString(stringArray) +
+                    ", aLong=" + aLong +
+                    ", aBoxedLong=" + aBoxedLong +
+                    '}';
+        }
     }
+
+    ;
 }
