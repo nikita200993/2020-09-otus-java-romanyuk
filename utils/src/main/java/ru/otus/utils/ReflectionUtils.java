@@ -6,16 +6,14 @@ import java.lang.reflect.Method;
 
 public class ReflectionUtils {
 
-    private ReflectionUtils()
-    {
+    private ReflectionUtils() {
         throw new IllegalAccessError();
     }
 
     public static Object invokeMethod(
             final Method method,
             final Object receiver,
-            final Object... args) throws RuntimeException
-    {
+            final Object... args) throws RuntimeException {
         Contracts.requireNonNullArgument(method);
 
         try {
@@ -32,8 +30,7 @@ public class ReflectionUtils {
 
     public static <T> T invokeConstructor(
             final Constructor<T> constructor,
-            final Object... args) throws RuntimeException
-    {
+            final Object... args) throws RuntimeException {
         Contracts.requireNonNullArgument(constructor);
 
         try {
@@ -46,5 +43,20 @@ public class ReflectionUtils {
                     ex.getCause()
             );
         }
+    }
+
+    public static boolean isBoxedPrimitive(final Object object) {
+        Contracts.requireNonNullArgument(object);
+
+        final Class<?> clazz = object.getClass();
+
+        return clazz.equals(Integer.class)
+                || clazz.equals(Long.class)
+                || clazz.equals(Short.class)
+                || clazz.equals(Float.class)
+                || clazz.equals(Double.class)
+                || clazz.equals(Boolean.class)
+                || clazz.equals(Byte.class)
+                || clazz.equals(Character.class);
     }
 }
