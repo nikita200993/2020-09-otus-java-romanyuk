@@ -114,4 +114,11 @@ public class JsonSerializerTest {
         final String jsonStringExpected = gson.toJson(list);
         Assertions.assertEquals(jsonStringExpected, jsonStringActual);
     }
+
+    @Test
+    void testThatThrowsIfUnsupportedClassPassed() {
+        Assertions.assertThrows(
+                SerializationInvalidClassPassed.class,
+                () -> jsonSerializer.serialize(new Object()));
+    }
 }
