@@ -1,5 +1,6 @@
 package ru.otus.utils;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -71,11 +72,11 @@ public class ReflectionUtils {
                 .filter(field -> !Modifier.isStatic(field.getModifiers()));
     }
 
-    public static Field asAccessible(final Field field) {
-        Contracts.requireNonNullArgument(field);
+    public static <T extends AccessibleObject> T asAccessible(final T accessibleObject) {
+        Contracts.requireNonNullArgument(accessibleObject);
 
-        field.setAccessible(true);
-        return field;
+        accessibleObject.setAccessible(true);
+        return accessibleObject;
     }
 
     public static Object getFieldValue(final Field field, final Object object) {
