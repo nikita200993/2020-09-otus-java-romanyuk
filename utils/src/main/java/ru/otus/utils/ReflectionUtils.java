@@ -92,4 +92,12 @@ public class ReflectionUtils {
                     + object.getClass());
         }
     }
+
+    public static <V> V newInstance(final Constructor<V> constructor, Object... arguments) {
+        try {
+            return constructor.newInstance(arguments);
+        } catch (Exception exception) {
+            throw new RuntimeException("Unable to create new instance of class " + constructor.getDeclaringClass());
+        }
+    }
 }

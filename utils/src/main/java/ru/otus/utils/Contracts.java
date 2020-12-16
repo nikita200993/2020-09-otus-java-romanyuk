@@ -10,6 +10,10 @@ public class Contracts {
         requireNonNull(argument, "Null arguments are forbidden");
     }
 
+    public static <T> T ensureNonNullArgument(final T argument) {
+        return ensureNonNull(argument);
+    }
+
     public static void requireNonNull(final Object object) {
         requireNonNull(object, "Null values are forbidden");
     }
