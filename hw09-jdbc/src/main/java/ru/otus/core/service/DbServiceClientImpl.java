@@ -4,10 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.otus.core.dao.ClientDao;
 import ru.otus.core.model.Client;
+import ru.otus.utils.Contracts;
 
 import java.util.Optional;
 
 public class DbServiceClientImpl implements DBServiceClient {
+
     private static final Logger logger = LoggerFactory.getLogger(DbServiceClientImpl.class);
 
     private final ClientDao clientDao;
@@ -17,15 +19,14 @@ public class DbServiceClientImpl implements DBServiceClient {
     }
 
     @Override
-    public long saveClient(Client client) {
+    public void saveClient(final Client client) {
+        Contracts.requireNonNullArgument(client);
+
         try (var sessionManager = clientDao.getSessionManager()) {
             sessionManager.beginSession();
             try {
-                var clientId = clientDao.insert(client);
+                clientDao.insertOrUpdate(client);
                 sessionManager.commitSession();
-
-                logger.info("created client: {}", clientId);
-                return clientId;
             } catch (Exception e) {
                 sessionManager.rollbackSession();
                 throw new DbServiceException(e);
@@ -38,10 +39,7 @@ public class DbServiceClientImpl implements DBServiceClient {
         try (var sessionManager = clientDao.getSessionManager()) {
             sessionManager.beginSession();
             try {
-                Optional<Client> clientOptional = clientDao.findById(id);
-
-                logger.info("client: {}", clientOptional.orElse(null));
-                return clientOptional;
+                return clientDao.findById(id);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 sessionManager.rollbackSession();
