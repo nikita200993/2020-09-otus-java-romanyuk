@@ -9,10 +9,11 @@ compileJava {
 
 dependencies {
     implementation 'ch.qos.logback:logback-classic'
-    implementation 'org.flywaydb:flyway-core'
     implementation 'org.postgresql:postgresql'
     implementation "com.google.code.findbugs:jsr305"
+    implementation("org.hibernate:hibernate-core")
     testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.testcontainers:postgresql"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
     implementation project(":utils")
 }
