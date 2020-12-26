@@ -12,6 +12,9 @@ ext.set("org.assertj.version", "3.18.0")
 ext.set("org.mockito.version", "3.6.0")
 ext.set("javax.json.version", "1.1.4")
 ext.set("com.google.code.gson.version", "2.8.6")
+ext.set("org.flywaydb.version", "7.3.1")
+ext.set("ch.qos.logback.version", "1.2.3")
+ext.set("org.postgresql.version", "42.2.18")
 
 idea {
 
@@ -55,6 +58,12 @@ allprojects {
                     + "${rootProject.ext["javax.json.version"]}")
             dependency("com.google.code.gson:gson:"
                     + "${rootProject.ext["com.google.code.gson.version"]}")
+            dependency("org.flywaydb:flyway-core:"
+                    + "${rootProject.ext["org.flywaydb.version"]}")
+            dependency("ch.qos.logback:logback-classic:"
+                    + "${rootProject.ext["ch.qos.logback.version"]}")
+            dependency("org.postgresql:postgresql:"
+                    + "${rootProject.ext["org.postgresql.version"]}")
         }
     }
 
