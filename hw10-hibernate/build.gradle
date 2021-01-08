@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_15
+    targetCompatibility = JavaVersion.VERSION_15
+}
+
+dependencies {
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'org.postgresql:postgresql'
+    implementation "com.google.code.findbugs:jsr305"
+    implementation("org.hibernate:hibernate-core")
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.testcontainers:postgresql"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+    implementation project(":utils")
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+configurations {
+    all {
+        resolutionStrategy {
+            force "org.jboss.logging:jboss-logging:3.4.1.Final"
+            force "org.slf4j:slf4j-api:1.7.30"
+            force "net.java.dev.jna:jna:5.5.0"
+        }
+    }
+}
