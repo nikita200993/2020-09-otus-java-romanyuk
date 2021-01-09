@@ -64,4 +64,9 @@ public class MyCache<K, V> implements HwCache<K, V> {
 
         listeners.remove(listener);
     }
+
+    @Override
+    public int size() {
+        return backingMap.size();
+    }
 }
