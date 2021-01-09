@@ -24,7 +24,8 @@ import java.util.Set;
 public class Client {
 
     @Id
-    @SequenceGenerator(name = "clientId", sequenceName = "client_id")
+    // initial value is set to 1000, because Long has default cache from -128 to 127
+    @SequenceGenerator(name = "clientId", sequenceName = "client_id", initialValue = 1000)
     @GeneratedValue(generator = "clientId", strategy = GenerationType.SEQUENCE)
     private Long id;
     @Column(name = "name")
