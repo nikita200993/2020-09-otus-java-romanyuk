@@ -34,6 +34,12 @@ public class CachingClientService implements DBServiceClient {
         if (cachedResult != null) {
             return Optional.of(cachedResult);
         }
-        return serviceClient.getClient(id);
+        final var result = serviceClient.getClient(id);
+        result.ifPresent(client -> hwCache.put(client.getId(), client));
+        return result;
+    }
+
+    public int cacheSize() {
+        return hwCache.size();
     }
 }
