@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_15
+    targetCompatibility = JavaVersion.VERSION_15
+}
+
+dependencies {
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'org.postgresql:postgresql'
+    implementation "com.google.code.findbugs:jsr305"
+    implementation("org.hibernate:hibernate-core")
+    implementation "org.testcontainers:postgresql"
+    implementation project(":utils")
+}
+
+configurations {
+    all {
+        resolutionStrategy {
+            force "org.jboss.logging:jboss-logging:3.4.1.Final"
+            force "org.slf4j:slf4j-api:1.7.30"
+            force "net.java.dev.jna:jna:5.5.0"
+        }
+    }
+}
