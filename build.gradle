@@ -17,6 +17,7 @@ ext.set("ch.qos.logback.version", "1.2.3")
 ext.set("org.postgresql.version", "42.2.18")
 ext.set("org.hibernate.version", "5.4.27.Final")
 ext.set("org.testcontainers.version", "1.15.1")
+ext.set("org.eclipse.jetty.version", "11.0.0")
 
 idea {
 
@@ -40,6 +41,9 @@ allprojects {
     apply plugin: "io.spring.dependency-management"
 
     dependencyManagement {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:2.4.1")
+        }
         dependencies {
             dependency("com.google.guava:guava:${rootProject.ext["com.google.guava.version"]}")
             dependency("org.junit.jupiter:junit-jupiter-api:"
@@ -67,9 +71,9 @@ allprojects {
             dependency("org.postgresql:postgresql:"
                     + "${rootProject.ext["org.postgresql.version"]}")
             dependency("org.hibernate:hibernate-core:"
-            + "${rootProject.ext["org.hibernate.version"]}")
+                    + "${rootProject.ext["org.hibernate.version"]}")
             dependency("org.testcontainers:postgresql:"
-            + "${rootProject.ext["org.testcontainers.version"]}")
+                    + "${rootProject.ext["org.testcontainers.version"]}")
         }
     }
 
