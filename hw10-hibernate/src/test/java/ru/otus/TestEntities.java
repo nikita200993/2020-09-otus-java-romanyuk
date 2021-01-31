@@ -36,6 +36,7 @@ public class TestEntities extends BaseTest {
         } catch (final PersistenceException persistenceException) {
             LOGGER.error("Unable to rollback", persistenceException);
         } finally {
+            getSessionFactory().getStatistics().clear();
             session.close();
         }
     }
