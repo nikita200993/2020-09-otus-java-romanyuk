@@ -33,6 +33,19 @@ public class ReflectionUtils {
         }
     }
 
+    public static <V> V instantiateUsingNoArgConstructor(final Class<V> clazz) {
+        Contracts.requireNonNullArgument(clazz);
+
+        try {
+            final Constructor<V> constructor = clazz.getConstructor();
+            return ReflectionUtils.newInstance(constructor);
+        } catch (final NoSuchMethodException noSuchMethodException) {
+            throw new RuntimeException(
+                    "Unable to create class instance using no arg constructor",
+                    noSuchMethodException);
+        }
+    }
+
     public static <T> T invokeConstructor(
             final Constructor<T> constructor,
             final Object... args) throws RuntimeException {
@@ -99,5 +112,11 @@ public class ReflectionUtils {
         } catch (Exception exception) {
             throw new RuntimeException("Unable to create new instance of class " + constructor.getDeclaringClass());
         }
+    }
+
+    public static Stream<Method> getDeclaredMethods(final Class<?> clazz) {
+        Contracts.requireNonNullArgument(clazz);
+
+        return Arrays.stream(clazz.getDeclaredMethods());
     }
 }

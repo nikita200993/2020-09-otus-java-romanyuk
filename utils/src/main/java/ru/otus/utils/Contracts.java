@@ -23,6 +23,11 @@ public class Contracts {
         return object;
     }
 
+    public static <T> T ensureNonNull(final T object, final String message) {
+        requireNonNull(object, message);
+        return object;
+    }
+
     public static void requireNonNull(final Object object, final String message) {
         if (object == null) {
             throw new IllegalStateException(message);
@@ -43,6 +48,12 @@ public class Contracts {
 
     public static void forbidThat(final boolean predicate) {
         requireThat(!predicate, "Prohibition doesn't hold");
+    }
+
+    public static void forbidThat(final boolean predicate, final String message) {
+        Contracts.requireNonNullArgument(message);
+
+        requireThat(!predicate, message);
     }
 
     public static IllegalStateException unreachable() {
