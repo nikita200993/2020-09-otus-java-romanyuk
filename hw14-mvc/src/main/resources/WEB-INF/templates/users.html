@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Users</title>
+    <script>
+        function getUsers() {
+            const userDataContainer = document.getElementById('userDataContainer');
+            fetch('api/user')
+                .then(response => response.json())
+                .then(users => userDataContainer.innerHTML = JSON.stringify(users));
+        }
+        function createUser() {
+            const creationStatusContainer = document.getElementById('creationStatus');
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            const isAdmin = document.getElementById('role').checked;
+            const adminParam = isAdmin ? "admin" : "user";
+            fetch('api/user', {
+                 method : 'POST',
+                 headers : {
+                    'Content-Type' : 'application/json'
+                 },
+                 body : JSON.stringify({
+                        "login" : login,
+                        "password" : password,
+                        "role" : adminParam
+                 })
+            })
+                .then(response => response.json())
+                .then(status => creationStatusContainer.innerHTML = JSON.stringify(status));
+        }
+    </script>
+</head>
+<body>
+<h3>All users</h3>
+<table class="users">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="user : ${users}">
+            <td th:text="${user.id}"></td>
+            <td th:text="${user.login}"></td>
+        </tr>
+    </tbody>
+</table>
+<h4>Получить всех пользователей</h4>
+<button onclick="getUsers()">Получить</button>
+<pre id="userDataContainer"></pre>
+<h4>Создать пользователя</h4>
+<input type="text" id="login" placeholder="Введите логин">
+<input type="text" id="password" placeholder="Введите пароль">
+<input type="checkbox" id="role" placeholder="Роль">
+<button onclick="createUser()">Создать</button>
+<pre id="creationStatus"></pre>
+</body>
+</html>
