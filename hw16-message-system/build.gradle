@@ -1,6 +1,9 @@
 plugins {
-    id "java"
+    id "war"
 }
+
+sourceCompatibility = JavaVersion.VERSION_15
+targetCompatibility = JavaVersion.VERSION_15
 
 dependencies {
     implementation project(":utils")
@@ -9,6 +12,13 @@ dependencies {
     implementation("ch.qos.logback:logback-classic")
     implementation "org.testcontainers:postgresql"
     implementation("com.google.code.findbugs:jsr305")
+
+    implementation("org.springframework:spring-context")
+    implementation("org.springframework:spring-webmvc")
+    implementation("org.springframework:spring-web")
+    implementation("org.thymeleaf:thymeleaf")
+    implementation("org.thymeleaf:thymeleaf-spring5")
+    providedCompile("javax.servlet:javax.servlet-api")
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
