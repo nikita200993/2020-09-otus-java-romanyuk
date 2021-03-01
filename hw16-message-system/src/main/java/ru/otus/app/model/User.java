@@ -1,5 +1,6 @@
 package ru.otus.app.model;
 
+import ru.otus.app.dto.UserDto;
 import ru.otus.utils.Contracts;
 
 import javax.annotation.Nullable;
@@ -29,19 +30,24 @@ public class User {
     private String password;
     @Nullable
     @Column(name = "role", nullable = false)
-    private String role;
+    private String roleName;
 
     public User() {
     }
 
-    public User(final String login, final String password, final Role role) {
+    public User(final String login, final String password, final Role roleName) {
         Contracts.requireNonNullArgument(login);
         Contracts.requireNonNullArgument(password);
-        Contracts.requireNonNullArgument(role);
+        Contracts.requireNonNullArgument(roleName);
 
         this.login = login;
         this.password = password;
-        this.role = role.getRoleName();
+        this.roleName = roleName.getRoleName();
+    }
+
+    public UserDto toUserDto() {
+
+        return new UserDto(login, password, Role.forRoleName(roleName));
     }
 
     @Nullable
@@ -72,14 +78,14 @@ public class User {
     }
 
     @Nullable
-    public Role getRole() {
-        return role != null ? Role.forRoleName(role) : null;
+    public Role getRoleName() {
+        return roleName != null ? Role.forRoleName(roleName) : null;
     }
 
-    public void setRole(final Role role) {
-        Contracts.requireNonNullArgument(role);
+    public void setRoleName(final Role roleName) {
+        Contracts.requireNonNullArgument(roleName);
 
-        this.role = role.getRoleName();
+        this.roleName = roleName.getRoleName();
     }
 
     @Override
@@ -87,12 +93,12 @@ public class User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final User user = (User) o;
-        return Objects.equals(login, user.login) && Objects.equals(password, user.password) && Objects.equals(role, user.role);
+        return Objects.equals(login, user.login) && Objects.equals(password, user.password) && Objects.equals(roleName, user.roleName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(login, password, role);
+        return Objects.hash(login, password, roleName);
     }
 
 }
