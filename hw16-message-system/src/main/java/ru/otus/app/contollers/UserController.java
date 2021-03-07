@@ -14,11 +14,17 @@ import ru.otus.utils.Contracts;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class UserController {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+    public static ResponseEntity<Map<String, String>> CREATION_SUCCESS_RESPONSE = new ResponseEntity<>(
+            Map.of("status", "ok"), HttpStatus.OK);
+    public static ResponseEntity<Map<String, String>> CREATION_FAILURE_RESPONSE = new ResponseEntity<>(
+            Map.of("status", "error"), HttpStatus.INTERNAL_SERVER_ERROR);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+
 
     private final UserService userService;
 
@@ -37,15 +43,14 @@ public class UserController {
     }
 
     @PostMapping({"/api/user"})
-    public ResponseEntity<String> createUser(@RequestBody final UserDto user) {
+    public ResponseEntity<Map<String, String>> createUser(@RequestBody final UserDto user) {
         Contracts.requireNonNullArgument(user);
-
         try {
             userService.insert(user);
-            return new ResponseEntity<>("ok", HttpStatus.OK);
+            return CREATION_SUCCESS_RESPONSE;
         } catch (final Exception exception) {
             LOGGER.error("Error saving {}", user, exception);
-            return new ResponseEntity<>("error", HttpStatus.INTERNAL_SERVER_ERROR);
+            return CREATION_FAILURE_RESPONSE;
         }
     }
 }
