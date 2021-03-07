@@ -8,17 +8,17 @@ public class UserDto {
 
     private final String login;
     private final String password;
-    private final String roleName;
+    private final String role;
 
-    public UserDto(final String login, final String password, final String roleName) {
+    public UserDto(final String login, final String password, final Role role) {
         this.login = Contracts.ensureNonNullArgument(login);
         this.password = Contracts.ensureNonNullArgument(password);
-        this.roleName = Contracts.ensureNonNullArgument(roleName);
-        Role.isValidRole(roleName);
+        this.role = Contracts.ensureNonNullArgument(role.getRoleName());
+        Role.isValidRole(this.role);
     }
 
     public User toUser() {
-        return new User(login, password, Role.forRoleName(roleName));
+        return new User(login, password, Role.forRoleName(role));
     }
 
     public String getLogin() {
@@ -29,7 +29,7 @@ public class UserDto {
         return password;
     }
 
-    public String getRoleName() {
-        return roleName;
+    public String getRole() {
+        return role;
     }
 }

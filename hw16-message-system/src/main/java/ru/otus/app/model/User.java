@@ -47,7 +47,7 @@ public class User {
 
     public UserDto toUserDto() {
 
-        return new UserDto(login, password, roleName);
+        return new UserDto(login, password, Role.forRoleName(roleName));
     }
 
     @Nullable
