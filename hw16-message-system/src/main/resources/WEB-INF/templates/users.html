@@ -9,6 +9,7 @@
                 .then(response => response.json())
                 .then(users => userDataContainer.innerHTML = JSON.stringify(users));
         }
+
         function createUser() {
             const creationStatusContainer = document.getElementById('creationStatus');
             const login = document.getElementById('login').value;
@@ -16,15 +17,15 @@
             const isAdmin = document.getElementById('role').checked;
             const adminParam = isAdmin ? "admin" : "user";
             fetch('api/user', {
-                 method : 'POST',
-                 headers : {
-                    'Content-Type' : 'application/json'
-                 },
-                 body : JSON.stringify({
-                        "login" : login,
-                        "password" : password,
-                        "role" : adminParam
-                 })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "login": login,
+                    "password": password,
+                    "role": adminParam
+                })
             })
                 .then(response => response.json())
                 .then(status => creationStatusContainer.innerHTML = JSON.stringify(status));
@@ -35,16 +36,18 @@
 <h3>All users</h3>
 <table class="users">
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-        </tr>
+    <tr>
+        <th>Login</th>
+        <th>Password</th>
+        <th>Role</th>
+    </tr>
     </thead>
     <tbody>
-        <tr th:each="user : ${users}">
-            <td th:text="${user.id}"></td>
-            <td th:text="${user.login}"></td>
-        </tr>
+    <tr th:each="user : ${users}">
+        <td th:text="${user.login}"></td>
+        <td th:text="${user.password}"></td>
+        <td th:text="${user.role}"></td>
+    </tr>
     </tbody>
 </table>
 <h4>Получить всех пользователей</h4>
