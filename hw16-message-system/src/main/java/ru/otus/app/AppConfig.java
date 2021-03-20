@@ -1,8 +1,9 @@
 package ru.otus.app;
 
 import org.hibernate.SessionFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import ru.otus.app.hibernate.HibernateUtils;
 import ru.otus.app.hibernate.dao.UserDaoHibernate;
 import ru.otus.app.hibernate.sessionmanager.SessionManagerHibernate;
@@ -10,8 +11,12 @@ import ru.otus.app.model.User;
 import ru.otus.app.services.UserService;
 import ru.otus.app.services.UserServiceImpl;
 
-@Configuration
+@SpringBootApplication
 public class AppConfig {
+
+    public static void main(final String[] args) {
+        new SpringApplication(AppConfig.class).run(args);
+    }
 
     @Bean
     public SessionFactory sessionFactory() {
