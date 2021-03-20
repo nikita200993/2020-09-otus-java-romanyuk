@@ -6,12 +6,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -29,9 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = TestConfig.class)
-@WebAppConfiguration
+@SpringBootTest(classes = TestConfig.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestUserController {
 
@@ -57,9 +53,9 @@ public class TestUserController {
     @Test
     void test() throws Exception {
 
-        final var petr = new UserDto("Petr", "123", Role.USER);
-        final var alex = new UserDto("Alex", "1234", Role.USER);
-        final var cory = new UserDto("Cory", "fdsf", Role.ADMIN);
+        final var petr = new UserDto("Petr", "123", Role.USER.getRoleName());
+        final var alex = new UserDto("Alex", "1234", Role.USER.getRoleName());
+        final var cory = new UserDto("Cory", "fdsf", Role.ADMIN.getRoleName());
         mvc.perform(postBuilder(petr))
                 .andExpect(status().isOk())
                 .andExpect(content().string(gson.toJson(UserController.CREATION_SUCCESS_RESPONSE.getBody())));
