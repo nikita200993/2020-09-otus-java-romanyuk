@@ -20,4 +20,9 @@ public class MainPage {
         model.addAttribute("users", userService.findAll());
         return "users";
     }
+
+    @GetMapping({"/websocket"})
+    public String websocketAlternative() {
+        return "users-websocket";
+    }
 }
