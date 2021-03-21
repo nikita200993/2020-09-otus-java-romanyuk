@@ -1,4 +1,4 @@
-package ru.otus.app.contollers;
+package ru.otus.app.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

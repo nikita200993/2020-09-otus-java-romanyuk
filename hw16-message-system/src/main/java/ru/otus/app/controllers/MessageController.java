@@ -1,7 +1,6 @@
-package ru.otus.app.contollers;
+package ru.otus.app.controllers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.MessageHeaders;
@@ -12,10 +11,10 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import ru.otus.app.dto.UserDto;
-import ru.otus.app.services.UserService;
+import ru.otus.app.messagesystem.FrontendService;
+import ru.otus.app.messagesystem.UserRequestAndResponse;
 
 import java.util.Collections;
-import java.util.List;
 
 @Controller
 public class MessageController {
@@ -23,49 +22,38 @@ public class MessageController {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
     private final SimpMessagingTemplate simpMessagingTemplate;
-    private final UserService userService;
+    private final FrontendService frontendService;
 
     public MessageController(
             final SimpMessagingTemplate simpMessagingTemplate,
-            final UserService userService) {
+            final FrontendService frontendService) {
         this.simpMessagingTemplate = simpMessagingTemplate;
-        this.userService = userService;
+        this.frontendService = frontendService;
     }
 
     @MessageMapping("/create")
     public void createUser(final UserDto userDto, @Header("simpSessionId") String sessionId) {
-        LOGGER.info("Session = {}, message = {}", sessionId, userDto);
-        CreationResponse response;
-        try {
-            userService.insert(userDto);
-            response = CreationResponse.OK;
-        } catch (final Exception ex) {
-            LOGGER.error("Failed to create user {}", userDto, ex);
-            response = CreationResponse.FAIL;
-        }
-        simpMessagingTemplate.convertAndSendToUser(
-                sessionId,
-                "/queue/reply/create",
-                response,
-                createHeaders(sessionId)
+        frontendService.serveRequest(
+                UserRequestAndResponse.newCreationRequest(userDto),
+                response -> simpMessagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/reply/create",
+                        response.isCompletedSuccessfully() ? CreationResponse.OK : CreationResponse.FAIL,
+                        createHeaders(sessionId)
+                )
         );
     }
 
     @MessageMapping("/users")
     public void users(@Header("simpSessionId") String sessionId) {
-        LOGGER.info("Session = {}", sessionId);
-        List<UserDto> result;
-        try {
-            result = userService.findAll();
-        } catch (final Exception ex) {
-            result = Collections.emptyList();
-            LOGGER.error("Failed to retrieve users", ex);
-        }
-        simpMessagingTemplate.convertAndSendToUser(
-                sessionId,
-                "/queue/reply/users",
-                result,
-                createHeaders(sessionId)
+        frontendService.serveRequest(
+                UserRequestAndResponse.newGetALlUsersRequest(),
+                response -> simpMessagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/reply/users",
+                        response.isCompletedSuccessfully() ? response.getUsers() : Collections.emptyList(),
+                        createHeaders(sessionId)
+                )
         );
     }
 
