@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Users</title>
+    <script th:src="@{/webjars/jquery/3.1.1/jquery.min.js}"></script>
+    <script th:src="@{/webjars/sockjs-client/1.1.2/sockjs.min.js}"></script>
+    <script th:src="@{/webjars/stomp-websocket/2.3.3-1/stomp.min.js}"></script>
+    <script th:src="@{/app.js}"></script>
+</head>
+<body>
+<h4>Создать пользователя</h4>
+<input type="text" id="login" placeholder="Введите логин">
+<input type="text" id="password" placeholder="Введите пароль">
+<input type="checkbox" id="role" placeholder="Роль">
+<button id="createUser">Создать</button>
+<pre id="creationStatus">blabla</pre>
+<h4>All users</h4>
+<button id="getAllUsers">Запросить всех пользователей</button>
+<table class="users">
+    <thead>
+    <tr>
+        <th>Login</th>
+        <th>Password</th>
+        <th>Role</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</body>
+</html>
