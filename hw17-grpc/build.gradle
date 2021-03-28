@@ -1,0 +1,48 @@
+plugins {
+    id "java"
+    id "com.google.protobuf" version "0.8.12"
+}
+
+sourceCompatibility = JavaVersion.VERSION_15
+targetCompatibility = JavaVersion.VERSION_15
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.12.0"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.36.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += "${protobuf.getGeneratedFilesBaseDir()}/main/java"
+            srcDirs += "${protobuf.getGeneratedFilesBaseDir()}/main/grpc"
+        }
+    }
+}
+
+dependencies {
+    implementation "io.grpc:grpc-netty-shaded"
+    implementation "io.grpc:grpc-protobuf"
+    implementation "io.grpc:grpc-stub"
+    implementation "ch.qos.logback:logback-classic"
+    compileOnly "org.apache.tomcat:annotations-api:6.0.53"
+    implementation project(":utils")
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}

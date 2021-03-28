@@ -1,0 +1,18 @@
+syntax="proto3";
+
+package ru.otus.grpc;
+
+option java_multiple_files = true;
+
+message IntRange {
+    int32 start = 1;
+    int32 end = 2;
+}
+
+message Int {
+    int32 anInt = 1;
+}
+
+service IntStreamingService {
+    rpc streamInts(IntRange) returns (stream Int);
+}
