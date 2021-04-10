@@ -19,6 +19,7 @@ ext.set("org.hibernate.version", "5.4.27.Final")
 ext.set("org.testcontainers.version", "1.15.1")
 ext.set("org.eclipse.jetty.version", "11.0.0")
 ext.set("grpcVersion", "1.36.0")
+ext.set("airlineVersion", "0.8")
 
 idea {
 
@@ -78,6 +79,7 @@ allprojects {
             dependency("io.grpc:grpc-netty-shaded:$grpcVersion")
             dependency("io.grpc:grpc-protobuf:$grpcVersion")
             dependency("io.grpc:grpc-stub:$grpcVersion")
+            dependency("io.airlift:airline:$airlineVersion")
         }
     }
 
