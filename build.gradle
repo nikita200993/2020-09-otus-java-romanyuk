@@ -49,33 +49,33 @@ allprojects {
         dependencies {
             dependency("com.google.guava:guava:${rootProject.ext["com.google.guava.version"]}")
             dependency("org.junit.jupiter:junit-jupiter-api:"
-                    + "${rootProject.ext["org.junit.jupiter.version"]}")
+                    +"${rootProject.ext["org.junit.jupiter.version"]}")
             dependency("org.junit.jupiter:junit-jupiter-engine:"
-                    + "${rootProject.ext["org.junit.jupiter.version"]}")
+                    +"${rootProject.ext["org.junit.jupiter.version"]}")
             dependency("org.ow2.asm:asm-commons:"
-                    + "${rootProject.ext["org.ow2.asm.version"]}")
+                    +"${rootProject.ext["org.ow2.asm.version"]}")
             dependency("com.google.code.findbugs:jsr305:"
-                    + "${rootProject.ext["com.google.code.findbugs.version"]}")
+                    +"${rootProject.ext["com.google.code.findbugs.version"]}")
             dependency("org.mockito:mockito-core:"
-                    + "${rootProject.ext["org.mockito.version"]}")
+                    +"${rootProject.ext["org.mockito.version"]}")
             dependency("org.mockito:mockito-junit-jupiter:"
-                    + "${rootProject.ext["org.mockito.version"]}")
+                    +"${rootProject.ext["org.mockito.version"]}")
             dependency("org.assertj:assertj-core:"
-                    + "${rootProject.ext["org.assertj.version"]}")
+                    +"${rootProject.ext["org.assertj.version"]}")
             dependency("javax.json:javax.json-api:"
-                    + "${rootProject.ext["javax.json.version"]}")
+                    +"${rootProject.ext["javax.json.version"]}")
             dependency("com.google.code.gson:gson:"
-                    + "${rootProject.ext["com.google.code.gson.version"]}")
+                    +"${rootProject.ext["com.google.code.gson.version"]}")
             dependency("org.flywaydb:flyway-core:"
-                    + "${rootProject.ext["org.flywaydb.version"]}")
+                    +"${rootProject.ext["org.flywaydb.version"]}")
             dependency("ch.qos.logback:logback-classic:"
-                    + "${rootProject.ext["ch.qos.logback.version"]}")
+                    +"${rootProject.ext["ch.qos.logback.version"]}")
             dependency("org.postgresql:postgresql:"
-                    + "${rootProject.ext["org.postgresql.version"]}")
+                    +"${rootProject.ext["org.postgresql.version"]}")
             dependency("org.hibernate:hibernate-core:"
-                    + "${rootProject.ext["org.hibernate.version"]}")
+                    +"${rootProject.ext["org.hibernate.version"]}")
             dependency("org.testcontainers:postgresql:"
-                    + "${rootProject.ext["org.testcontainers.version"]}")
+                    +"${rootProject.ext["org.testcontainers.version"]}")
             dependency("io.grpc:grpc-netty-shaded:$grpcVersion")
             dependency("io.grpc:grpc-protobuf:$grpcVersion")
             dependency("io.grpc:grpc-stub:$grpcVersion")
