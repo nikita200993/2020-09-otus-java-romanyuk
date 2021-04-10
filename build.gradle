@@ -18,6 +18,7 @@ ext.set("org.postgresql.version", "42.2.18")
 ext.set("org.hibernate.version", "5.4.27.Final")
 ext.set("org.testcontainers.version", "1.15.1")
 ext.set("org.eclipse.jetty.version", "11.0.0")
+ext.set("grpcVersion", "1.36.0")
 
 idea {
 
@@ -74,6 +75,9 @@ allprojects {
                     + "${rootProject.ext["org.hibernate.version"]}")
             dependency("org.testcontainers:postgresql:"
                     + "${rootProject.ext["org.testcontainers.version"]}")
+            dependency("io.grpc:grpc-netty-shaded:$grpcVersion")
+            dependency("io.grpc:grpc-protobuf:$grpcVersion")
+            dependency("io.grpc:grpc-stub:$grpcVersion")
         }
     }
 
