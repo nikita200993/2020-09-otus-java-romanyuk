@@ -1,5 +1,6 @@
 package ru.otus.vcs.repository;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import ru.otus.utils.Contracts;
 import ru.otus.vcs.config.GitConfig;
 import ru.otus.vcs.exception.InnerException;
@@ -10,7 +11,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Locale;
 
+import static ru.otus.vcs.utils.Utils.compress;
 import static ru.otus.vcs.utils.Utils.decompress;
 
 public class GitRepository {
@@ -67,6 +71,29 @@ public class GitRepository {
         return (V) GitObject.deserialize(raw);
     }
 
+    /**
+     * Saves git object and returns its sha1 hex representation.
+     *
+     * @param gitObject object to save.
+     * @return sha1 hex.
+     */
+    public String saveGitObject(final GitObject gitObject) {
+        Contracts.requireNonNullArgument(gitObject);
+
+        final var bytes = gitObject.serialize();
+        final String sha = DigestUtils.sha1Hex(bytes).toLowerCase(Locale.ROOT);
+        final Path savePath = repoPath(Path.of(OBJECTS, sha.substring(0, 2), sha.substring(2)));
+        try {
+            if (!Files.exists(savePath)) {
+                Files.createDirectories(savePath.getParent());
+                Files.write(savePath, compress(bytes), StandardOpenOption.CREATE_NEW);
+            }
+        } catch (final IOException ex) {
+            throw new InnerException("Can't save git object to path " + savePath, ex);
+        }
+        return sha;
+    }
+
     public Path repoPath(final Path relative) {
         return gitDir.resolve(relative);
     }
@@ -87,11 +114,13 @@ public class GitRepository {
         try {
             final Path repoPath = currentDirToSearch.resolve(GITDIR);
             if (Files.exists(repoPath) && Files.isDirectory(repoPath)) {
+                checkRepositoryLayout(repoPath);
                 final var config = GitConfig.create(repoPath.resolve(CONFIG));
                 if (config.get(GitConfig.REPO_VER_KEY) != 0) {
                     throw new RepoCreationException("Config value for key '" + GitConfig.REPO_VER_KEY.getName()
                             + "' should be '0'");
                 }
+                checkRepositoryLayout(repoPath);
                 return new GitRepository(
                         currentDirToSearch,
                         repoPath,
@@ -127,6 +156,29 @@ public class GitRepository {
 
     private static RepoCreationException wrapAsRepoCreationException(final Exception ex) {
         return new RepoCreationException("Error creating new git repository. " + ex.getMessage(), ex);
+    }
+
+    private static void checkRepositoryLayout(final Path gitdir) {
+        checkLayoutFileIsPresent(gitdir, Path.of(CONFIG));
+        checkLayoutDirIsPresent(gitdir, Path.of(BRANCHES));
+        checkLayoutDirIsPresent(gitdir, Path.of(OBJECTS));
+        checkLayoutDirIsPresent(gitdir, Path.of(REFS));
+        checkLayoutDirIsPresent(gitdir, Path.of(REFS).resolve(TAGS));
+        checkLayoutDirIsPresent(gitdir, Path.of(REFS).resolve(HEADS));
+        checkLayoutFileIsPresent(gitdir, Path.of(DESCRIPTION));
+        checkLayoutFileIsPresent(gitdir, Path.of(HEAD));
+    }
+
+    private static void checkLayoutDirIsPresent(final Path gitdir, final Path relativePath) {
+        if (!Files.isDirectory(gitdir.resolve(relativePath))) {
+            throw new RepoCreationException(String.format("Bad repository layout. Directory %s is absent", relativePath));
+        }
+    }
+
+    private static void checkLayoutFileIsPresent(final Path gitdir, final Path relativePath) {
+        if (!Files.isRegularFile(gitdir.resolve(relativePath))) {
+            throw new RepoCreationException(String.format("Bad repository layout. File %s is absent", relativePath));
+        }
     }
 
     private static Path ensureUserProviderDirIsValidForNewRepo(final String workdir) {

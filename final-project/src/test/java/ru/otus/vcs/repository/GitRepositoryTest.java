@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import ru.otus.vcs.config.GitConfig;
 import ru.otus.vcs.exception.UserException;
+import ru.otus.vcs.objects.Blob;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,5 +62,14 @@ public class GitRepositoryTest {
         Assertions.assertThatThrownBy(() -> GitRepository.find(temp.toString()))
                 .isExactlyInstanceOf(GitRepository.RepoCreationException.class)
                 .hasMessageContaining("should be '0'");
+    }
+
+    @Test
+    void testSaveObject(@TempDir final Path temp) throws IOException {
+        final var repo = GitRepository.createNew(temp.toString());
+        final var blob = new Blob("Kek");
+        final var sha = repo.saveGitObject(blob);
+        Assertions.assertThat(repo.<Blob>readGitObject(sha))
+                .isEqualTo(blob);
     }
 }
