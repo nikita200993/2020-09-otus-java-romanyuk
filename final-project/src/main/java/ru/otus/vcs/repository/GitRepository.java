@@ -4,12 +4,14 @@ import ru.otus.utils.Contracts;
 import ru.otus.vcs.config.GitConfig;
 import ru.otus.vcs.exception.InnerException;
 import ru.otus.vcs.exception.UserException;
+import ru.otus.vcs.objects.GitObject;
 
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+
+import static ru.otus.vcs.utils.Utils.decompress;
 
 public class GitRepository {
 
@@ -48,29 +50,21 @@ public class GitRepository {
 
     public static GitRepository createNew(final String workdir) {
         Contracts.requireNonNullArgument(workdir);
-        try {
-            final var workdirPath = Path.of(workdir)
-                    .toAbsolutePath()
-                    .normalize();
-            if (!Files.exists(workdirPath)) {
-                throw new UserException("Directory " + workdir + "doesn't exist.");
-            }
-            if (!Files.isDirectory(workdirPath)) {
-                throw new UserException(workdir + " is not a directory.");
-            }
-            if (Files.list(workdirPath).count() != 0) {
-                throw new UserException(workdir + " is not empty.");
-            }
-            final var defaultConfig = new GitConfig();
-            createRepoLayout(workdirPath.resolve(GITDIR), defaultConfig);
-            return new GitRepository(workdirPath, workdirPath.resolve(GITDIR), defaultConfig);
-        } catch (final InvalidPathException ex) {
-            throw new UserException("Bad repository path = " + workdir);
-        } catch (final FileAlreadyExistsException ex) {
-            throw new UserException(String.format("Directory %s already contains file .git.", workdir));
-        } catch (final IOException ex) {
-            throw wrapAsRepoCreationException(ex);
-        }
+
+        final var workdirPath = ensureUserProviderDirIsValidForNewRepo(workdir);
+        final var defaultConfig = new GitConfig();
+        createRepoLayout(workdirPath.resolve(GITDIR), defaultConfig);
+        return new GitRepository(workdirPath, workdirPath.resolve(GITDIR), defaultConfig);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <V extends GitObject> V readGitObject(final String sha) throws IOException {
+        Contracts.requireNonNullArgument(sha);
+        final String dirName = sha.substring(0, 2);
+        final String fileName = sha.substring(2);
+        final Path pathToFile = repoPath(Path.of(OBJECTS, dirName, fileName));
+        final byte[] raw = decompress(Files.readAllBytes(pathToFile));
+        return (V) GitObject.deserialize(raw);
     }
 
     public Path repoPath(final Path relative) {
@@ -133,6 +127,32 @@ public class GitRepository {
 
     private static RepoCreationException wrapAsRepoCreationException(final Exception ex) {
         return new RepoCreationException("Error creating new git repository. " + ex.getMessage(), ex);
+    }
+
+    private static Path ensureUserProviderDirIsValidForNewRepo(final String workdir) {
+        try {
+            final var workdirPath = Path.of(workdir)
+                    .toAbsolutePath()
+                    .normalize();
+            if (!Files.exists(workdirPath)) {
+                throw new UserException("Directory " + workdir + "doesn't exist.");
+            }
+            if (!Files.isDirectory(workdirPath)) {
+                throw new UserException(workdir + " is not a directory.");
+            }
+            if (Files.list(workdirPath).count() != 0) {
+                throw new UserException(workdir + " is not empty.");
+            }
+            return workdirPath;
+        } catch (final InvalidPathException ex) {
+            throw new UserException(
+                    String.format("Bad input dir %s. %s", workdir, ex.getMessage()),
+                    ex
+            );
+        } catch (final IOException ex) {
+            // exception thrown by Files.list is strange, cause we checked that arg is dir
+            throw wrapAsRepoCreationException(ex);
+        }
     }
 
     public static class RepoCreationException extends InnerException {
