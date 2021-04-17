@@ -1,7 +1,5 @@
 package ru.otus.vcs.utils;
 
-import ru.otus.utils.Contracts;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.DeflaterOutputStream;
@@ -23,12 +21,6 @@ public class Utils {
         } catch (final IOException ex) {
             throw new IllegalStateException("Here can't be io error, because writing to byte array output stream", ex);
         }
-    }
-
-    public static String sha(final String string) {
-        Contracts.requireNonNullArgument(string);
-
-        throw new IllegalStateException();
     }
 
     public static byte[] decompress(final byte[] compressed) {
