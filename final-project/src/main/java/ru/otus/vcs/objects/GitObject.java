@@ -3,29 +3,36 @@ package ru.otus.vcs.objects;
 import ru.otus.utils.Contracts;
 import ru.otus.vcs.exception.InnerException;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import static ru.otus.vcs.utils.Utils.indexOf;
+import static ru.otus.vcs.utils.Utils.utf8;
+
 public abstract class GitObject {
 
     public static GitObject deserialize(final byte[] bytes) throws DeserializationException {
         Contracts.requireNonNullArgument(bytes);
 
-        final String content = new String(bytes);
-        final int firstWs = content.indexOf(' ');
-        if (firstWs == -1) {
+        final int firstWsPos = indexOf(bytes, (byte) ' ', 0, bytes.length);
+        if (firstWsPos == -1) {
             throw badFormat("Can read type of object.");
         }
-        final String type = content.substring(0, firstWs);
-        final int endOfSize = content.indexOf(0);
-        if (endOfSize == -1 || firstWs + 1 >= endOfSize) {
+        final String type = utf8(Arrays.copyOfRange(bytes, 0, firstWsPos));
+        final int nullBytePos = indexOf(bytes, (byte) 0, firstWsPos + 1, bytes.length);
+        if (nullBytePos == -1 || firstWsPos + 1 >= nullBytePos) {
             throw badFormat("Can't find size part of content.");
         }
-        final int size = parseSize(content.substring(firstWs + 1, endOfSize));
-        if (size != bytes.length - endOfSize - 1) {
+        final int size = parseSize(utf8(Arrays.copyOfRange(bytes, firstWsPos + 1, nullBytePos)));
+        if (size != bytes.length - nullBytePos - 1) {
             throw badFormat("Size read from byte array is not equal to actual size");
         }
-        final String objectContent = content.substring(endOfSize + 1);
+        final byte[] content = Arrays.copyOfRange(bytes, nullBytePos + 1, bytes.length);
         switch (type) {
             case Blob.type:
-                return new Blob(objectContent);
+                return new Blob(content);
+            case Tree.type:
+                return Tree.deserialize(content);
             default:
                 throw badFormat("Not a git object type " + type);
         }

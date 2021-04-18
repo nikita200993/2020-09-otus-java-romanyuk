@@ -9,6 +9,7 @@ import ru.otus.vcs.exception.UserException;
 import ru.otus.vcs.objects.Blob;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -67,7 +68,7 @@ public class GitRepositoryTest {
     @Test
     void testSaveObject(@TempDir final Path temp) throws IOException {
         final var repo = GitRepository.createNew(temp.toString());
-        final var blob = new Blob("Kek");
+        final var blob = new Blob("Kek".getBytes(StandardCharsets.UTF_8));
         final var sha = repo.saveGitObject(blob);
         Assertions.assertThat(repo.<Blob>readGitObject(sha))
                 .isEqualTo(blob);
