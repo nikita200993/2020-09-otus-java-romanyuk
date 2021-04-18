@@ -5,6 +5,7 @@ import ru.otus.utils.Contracts;
 import ru.otus.vcs.config.GitConfig;
 import ru.otus.vcs.exception.InnerException;
 import ru.otus.vcs.exception.UserException;
+import ru.otus.vcs.objects.DeserializationException;
 import ru.otus.vcs.objects.GitObject;
 
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class GitRepository {
     }
 
     @SuppressWarnings("unchecked")
-    public <V extends GitObject> V readGitObject(final String sha) throws IOException {
+    public <V extends GitObject> V readGitObject(final String sha) throws IOException, DeserializationException {
         Contracts.requireNonNullArgument(sha);
         final String dirName = sha.substring(0, 2);
         final String fileName = sha.substring(2);
