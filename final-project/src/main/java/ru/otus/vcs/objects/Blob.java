@@ -2,10 +2,7 @@ package ru.otus.vcs.objects;
 
 import ru.otus.utils.Contracts;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-
-import static ru.otus.vcs.utils.Utils.concat;
 
 public class Blob extends GitObject {
 
@@ -19,13 +16,13 @@ public class Blob extends GitObject {
     }
 
     @Override
-    public byte[] serialize() {
-        final int size = content.length;
-        final byte[] firstPart = (type +
-                ' ' +
-                size +
-                (char) 0).getBytes(StandardCharsets.UTF_8);
-        return concat(firstPart, content);
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public byte[] serializeContent() {
+        return content.clone();
     }
 
     @Override

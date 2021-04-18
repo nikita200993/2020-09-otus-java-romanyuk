@@ -4,7 +4,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -44,5 +47,19 @@ public class SerializationTest {
         final var tree = new Tree(List.of(first, second));
         Assertions.assertThat(GitObject.deserialize(tree.serialize()))
                 .isEqualTo(tree);
+    }
+
+    @Test
+    void testCommitSerialization() throws IOException, URISyntaxException {
+        final var realCommitData = Files.readAllBytes(
+                Path.of(
+                        SerializationTest.class.getResource("/commit")
+                                .toURI()
+                )
+        );
+        System.out.println(Arrays.toString(realCommitData));
+        final var commit = GitObject.deserialize(realCommitData);
+        Assertions.assertThat(commit.serialize())
+                .isEqualTo(realCommitData);
     }
 }

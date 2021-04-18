@@ -2,7 +2,6 @@ package ru.otus.vcs.objects;
 
 import ru.otus.utils.Contracts;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,18 +30,17 @@ public class Tree extends GitObject {
         return new Tree(result);
     }
 
-    @Override
-    public byte[] serialize() {
-        final byte[] content = serializeContent();
-        final byte[] prefix = (type + ' ' + content.length + (char) 0).getBytes(StandardCharsets.UTF_8);
-        return concat(prefix, content);
-    }
-
     public List<TreeLeaf> getLeaves() {
         return leaves;
     }
 
-    private byte[] serializeContent() {
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public byte[] serializeContent() {
         return concat(leaves.stream()
                 .map(TreeLeaf::serialize)
                 .collect(Collectors.toList())

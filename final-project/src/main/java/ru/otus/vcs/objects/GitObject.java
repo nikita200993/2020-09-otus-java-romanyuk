@@ -2,10 +2,10 @@ package ru.otus.vcs.objects;
 
 import ru.otus.utils.Contracts;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static ru.otus.vcs.utils.Utils.indexOf;
-import static ru.otus.vcs.utils.Utils.utf8;
+import static ru.otus.vcs.utils.Utils.*;
 
 public abstract class GitObject {
 
@@ -32,6 +32,8 @@ public abstract class GitObject {
                     return new Blob(content);
                 case Tree.type:
                     return Tree.deserialize(content);
+                case Commit.type:
+                    return Commit.deserialize(content);
                 default:
                     throw badFormat("Not a git object type " + type);
             }
@@ -39,12 +41,23 @@ public abstract class GitObject {
             if (ex instanceof DeserializationException) {
                 throw ex;
             } else {
-                throw new DeserializationException("Can't deserialize data. " + ex.getMessage(), ex);
+                throw new DeserializationException("Can't deserialize data. " + ex.getClass() + " " + ex.getMessage(), ex);
             }
         }
     }
 
-    public abstract byte[] serialize();
+    public abstract String getType();
+
+    public abstract byte[] serializeContent();
+
+    public final byte[] serialize() {
+        final var content = serializeContent();
+        final var prefix = (getType() +
+                ' ' +
+                content.length +
+                (char) 0).getBytes(StandardCharsets.UTF_8);
+        return concat(prefix, content);
+    }
 
     private static int parseSize(final String size) {
         try {
