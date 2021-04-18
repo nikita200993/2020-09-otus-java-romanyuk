@@ -9,10 +9,7 @@ import ru.otus.vcs.objects.DeserializationException;
 import ru.otus.vcs.objects.GitObject;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Locale;
 
 import static ru.otus.vcs.utils.Utils.compress;
@@ -88,6 +85,8 @@ public class GitRepository {
             if (!Files.exists(savePath)) {
                 Files.createDirectories(savePath.getParent());
                 Files.write(savePath, compress(bytes), StandardOpenOption.CREATE_NEW);
+            } else {
+                throw new InnerException("Can't save git object. Object with the same hash " + sha + " already exists.");
             }
         } catch (final IOException ex) {
             throw new InnerException("Can't save git object to path " + savePath, ex);
