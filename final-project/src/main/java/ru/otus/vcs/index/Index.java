@@ -7,6 +7,7 @@ import ru.otus.vcs.naming.VCSPath;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,8 +16,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableMap;
+import static ru.otus.vcs.utils.Utils.mapValuesToImmutableMap;
 import static ru.otus.vcs.utils.Utils.utf8;
 
 /**
@@ -33,11 +35,44 @@ public class Index {
     }
 
     public static Index deserialize(final byte[] bytes) {
+        Contracts.requireNonNullArgument(bytes);
+
         final var content = utf8(bytes);
+        if (content.isBlank()) {
+            return new Index(Collections.emptyList(), Collections.emptyMap());
+        }
         final var indexEntries = Arrays.stream(content.split("\n"))
                 .map(IndexEntry::fromLineContent)
-                .collect(toList());
-        return new Index(indexEntries, entryListToMap(indexEntries));
+                .collect(Collectors.toUnmodifiableList());
+        return new Index(indexEntries, indexEntriesToMap(indexEntries));
+    }
+
+    public static Index create(final List<IndexEntry> indexEntries) {
+        return new Index(List.copyOf(indexEntries), indexEntriesToMap(indexEntries));
+    }
+
+    public Index withNewIndexEntry(final VCSPath path, final String sha) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.requireNonNullArgument(sha);
+        Contracts.requireThat(!hasMergeConflict());
+
+        final var indexEntriesForPath = pathToIndexEntries.get(path);
+
+        if (indexEntriesForPath == null) {
+            final var newIndexEntry = new IndexEntry(Stage.normal, path, sha);
+            final var newIndexEntries = new ArrayList<>(indexEntries);
+            newIndexEntries.add(newIndexEntry);
+            return new Index(Collections.unmodifiableList(newIndexEntries), indexEntriesToMap(newIndexEntries));
+        } else if (indexEntriesForPath.get(0).getSha().equals(sha)) {
+            return this;
+        } else {
+            final var oldIndexEntry = indexEntriesForPath.get(0);
+            final var newIndexEntry = new IndexEntry(Stage.normal, path, sha);
+            final var newIndexEntries = new ArrayList<>(indexEntries);
+            final var indexOfOldIndexEntry = newIndexEntries.indexOf(oldIndexEntry);
+            newIndexEntries.set(indexOfOldIndexEntry, newIndexEntry);
+            return new Index(Collections.unmodifiableList(newIndexEntries), indexEntriesToMap(newIndexEntries));
+        }
     }
 
     public byte[] serialize() {
@@ -60,14 +95,25 @@ public class Index {
         return pathToIndexEntries.entrySet()
                 .stream()
                 .collect(
-                        toMap(
+                        toUnmodifiableMap(
                                 Map.Entry::getKey,
                                 entry -> entry.getValue().get(0).getSha()
                         )
                 );
     }
 
-    private static Map<VCSPath, List<IndexEntry>> entryListToMap(final List<IndexEntry> entries) {
+    public Map<VCSPath, List<IndexEntry>> getPathToIndexEntries() {
+        return pathToIndexEntries;
+    }
+
+    public Set<VCSPath> getConflictPaths() {
+        return pathToIndexEntries.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .map(Map.Entry::getKey)
+                .collect(toSet());
+    }
+
+    private static Map<VCSPath, List<IndexEntry>> indexEntriesToMap(final List<IndexEntry> entries) {
         final Map<VCSPath, Set<String>> pathToSha = new HashMap<>();
         final Map<VCSPath, Set<Stage>> pathToInteger = new HashMap<>();
         final Map<VCSPath, List<IndexEntry>> result = new HashMap<>();
@@ -95,7 +141,7 @@ public class Index {
             result.computeIfAbsent(entry.getPath(), (unused) -> new ArrayList<>()).add(entry);
         }
         checkStages(result);
-        return result;
+        return mapValuesToImmutableMap(result, List::copyOf);
     }
 
     private static void checkStages(final Map<VCSPath, List<IndexEntry>> pathToIndexEntries) {

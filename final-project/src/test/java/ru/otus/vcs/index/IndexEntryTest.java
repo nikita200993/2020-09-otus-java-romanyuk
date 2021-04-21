@@ -8,7 +8,7 @@ import ru.otus.vcs.naming.VCSPath;
 
 public class IndexEntryTest {
 
-    private static final String sha1 = DigestUtils.sha1Hex("dasd".getBytes());
+    private static final String sha1 = DigestUtils.sha1Hex("dasd");
 
     @Test
     void testEmptyLine() {
