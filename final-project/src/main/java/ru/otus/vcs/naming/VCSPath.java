@@ -62,4 +62,24 @@ public class VCSPath {
                 .map(VCSFileName::getName)
                 .collect(joining(separator));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VCSPath vcsPath = (VCSPath) o;
+        return path.equals(vcsPath.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return path.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "VCSPath{" +
+                "path=" + path +
+                '}';
+    }
 }
