@@ -78,8 +78,8 @@ public class VCSPath {
 
     @Override
     public String toString() {
-        return "VCSPath{" +
-                "path=" + path +
-                '}';
+        return path.stream()
+                .map(VCSFileName::getName)
+                .collect(joining(separator));
     }
 }
