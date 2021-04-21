@@ -4,6 +4,8 @@ import ru.otus.utils.Contracts;
 import ru.otus.vcs.exception.DeserializationException;
 import ru.otus.vcs.naming.VCSPath;
 
+import java.util.Objects;
+
 import static ru.otus.vcs.utils.Utils.isSha1;
 
 public class IndexEntry {
@@ -75,4 +77,25 @@ public class IndexEntry {
         return sha;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IndexEntry that = (IndexEntry) o;
+        return stage == that.stage && path.equals(that.path) && sha.equals(that.sha);
+    }
+
+    @Override
+    public int hashCode() {
+        return stage.hashCode() * 31 * 31 + path.hashCode() * 31 + sha.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "IndexEntry{" +
+                "stage=" + stage +
+                ", path=" + path +
+                ", sha='" + sha + '\'' +
+                '}';
+    }
 }
