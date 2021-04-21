@@ -45,6 +45,12 @@ public class VCSPathTest {
     }
 
     @Test
+    void testName() {
+        Assertions.assertThat(VCSPath.isValidVCSPathString("ddd"))
+                .isTrue();
+    }
+
+    @Test
     void testToOsPath() {
         final var osPath = Path.of("a", "b");
         final var vcsPath= VCSPath.create(osPath.toString().replace(File.separator, VCSPath.getSeparator()));
