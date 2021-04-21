@@ -46,7 +46,7 @@ public class VCSPath {
     }
 
     public static String hint() {
-        return "Path should contain one or more file names separated with '" + separator + "'";
+        return "Path should contain one or more file names separated with '" + separator + " and " + VCSFileName.hint();
     }
 
     public Path toOsPath() {

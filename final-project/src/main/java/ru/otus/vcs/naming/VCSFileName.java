@@ -32,7 +32,7 @@ public class VCSFileName {
     }
 
     public static String hint() {
-        return "Name shouldn't equal to '.' or '..' and should follow " + pattern.pattern();
+        return "name shouldn't equal to '.' or '..' and should follow " + pattern.pattern();
     }
 
     public String getName() {
