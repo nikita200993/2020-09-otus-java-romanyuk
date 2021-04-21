@@ -39,7 +39,7 @@ public class IndexEntry {
                 throw new DeserializationException(String.format("Bad code %d in line '%s'.", code, content));
             }
             final String path = content.substring(firstWs + 1, lastWs);
-            if (VCSPath.isValidVCSPathString(path)) {
+            if (!VCSPath.isValidVCSPathString(path)) {
                 throw new DeserializationException(
                         String.format(
                                 "Bad path = '%s' in line = '%s'. %s.",
