@@ -6,7 +6,6 @@ import ru.otus.vcs.exception.UserException;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,11 +14,15 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
+
+import static java.util.stream.Collectors.toMap;
 
 public class Utils {
 
@@ -129,24 +132,16 @@ public class Utils {
         }
     }
 
-    public static Path convertUnixStringToPath(final String stringPath) {
-        Contracts.requireNonNullArgument(stringPath);
+    public static <K, V, U> Map<K, U> mapValuesToImmutableMap(
+            final Map<K, V> mapToTransform,
+            final Function<? super V, ? extends U> mapper) {
+        Contracts.requireNonNullArgument(mapToTransform);
+        Contracts.requireNonNullArgument(mapper);
 
-        try {
-            return Path.of(stringPath.replace('/', File.separatorChar));
-        } catch (final InvalidPathException ex) {
-            throw new InnerException("Provided path = " + stringPath + " has bad syntax.", ex);
-        }
-    }
-
-    public static boolean isUnixPathIsSyntacticallyValidForThisOs(final String path) {
-        Contracts.requireNonNullArgument(path);
-
-        try {
-            Path.of(path.replace('/', File.separatorChar));
-            return true;
-        } catch (InvalidPathException ignore) {
-            return false;
-        }
+        return Map.copyOf(
+                mapToTransform.entrySet()
+                        .stream()
+                        .collect(toMap(Map.Entry::getKey, entry -> mapper.apply(entry.getValue())))
+        );
     }
 }
