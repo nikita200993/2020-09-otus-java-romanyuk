@@ -1,20 +1,38 @@
 package ru.otus.vcs.utils;
 
 import ru.otus.utils.Contracts;
+import ru.otus.vcs.exception.InnerException;
+import ru.otus.vcs.exception.UserException;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 
 public class Utils {
 
+    private static final Predicate<String> SHA1 = Pattern.compile("^[a-f0-9]{40}$").asMatchPredicate();
+
     private Utils() {
         throw new IllegalStateException();
+    }
+
+    public static boolean isSha1(final String sha1) {
+        Contracts.requireNonNullArgument(sha1);
+
+        return SHA1.test(sha1);
     }
 
     public static byte[] compress(final byte[] original) {
@@ -84,5 +102,51 @@ public class Utils {
         Contracts.requireNonNullArgument(bytes);
 
         return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    @Nullable
+    public static Path toRealPath(final Path path) {
+        Contracts.requireNonNullArgument(path);
+
+        try {
+            if (Files.exists(path)) {
+                return path.toRealPath(LinkOption.NOFOLLOW_LINKS);
+            } else {
+                return null;
+            }
+        } catch (final IOException ex) {
+            throw new InnerException("Can't transform to real path = " + path, ex);
+        }
+    }
+
+    public static Path convertUserProvidedStringToPath(final String stringPath) {
+        Contracts.requireNonNullArgument(stringPath);
+
+        try {
+            return Path.of(stringPath);
+        } catch (final InvalidPathException ex) {
+            throw new UserException("Provided by user path = " + stringPath + " has bad syntax.", ex);
+        }
+    }
+
+    public static Path convertUnixStringToPath(final String stringPath) {
+        Contracts.requireNonNullArgument(stringPath);
+
+        try {
+            return Path.of(stringPath.replace('/', File.separatorChar));
+        } catch (final InvalidPathException ex) {
+            throw new InnerException("Provided path = " + stringPath + " has bad syntax.", ex);
+        }
+    }
+
+    public static boolean isUnixPathIsSyntacticallyValidForThisOs(final String path) {
+        Contracts.requireNonNullArgument(path);
+
+        try {
+            Path.of(path.replace('/', File.separatorChar));
+            return true;
+        } catch (InvalidPathException ignore) {
+            return false;
+        }
     }
 }
