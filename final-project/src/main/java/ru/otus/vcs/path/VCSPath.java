@@ -1,4 +1,4 @@
-package ru.otus.vcs.naming;
+package ru.otus.vcs.path;
 
 import ru.otus.utils.Contracts;
 
