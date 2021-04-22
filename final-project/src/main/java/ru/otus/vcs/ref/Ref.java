@@ -37,4 +37,8 @@ public abstract class Ref {
                 || BranchName.isValidBranchName(refString);
     }
 
+    public static String hint() {
+        return "reserved ref " + ReservedRef.reservedRefStrings + " or valid sha1 or valid branch name";
+    }
+
 }
