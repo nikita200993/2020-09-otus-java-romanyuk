@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public final class VCSFileName {
 
-    private final static Pattern pattern = Pattern.compile("^[a-zA-Z0-9-.]{1,1000}$");
+    private final static Pattern pattern = Pattern.compile("^[a-zA-Z0-9-._]{1,1000}$");
 
     private final String name;
 
