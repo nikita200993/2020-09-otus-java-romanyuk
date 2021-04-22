@@ -4,7 +4,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class Sha1Test {
+public class TestSha1 {
 
     @Test
     void testIsValidSha1StringEmptyCase() {
