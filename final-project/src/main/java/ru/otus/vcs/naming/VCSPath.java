@@ -45,10 +45,6 @@ public class VCSPath {
                 .allMatch(VCSFileName::isValidVCSFileName);
     }
 
-    public static String hint() {
-        return "Path should contain one or more file names separated with '" + separator + " and " + VCSFileName.hint();
-    }
-
     public Path toOsPath() {
         return Path.of(
                 path.stream()
