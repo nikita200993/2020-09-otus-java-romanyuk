@@ -59,6 +59,10 @@ public class VCSPath {
                 .collect(joining(separator));
     }
 
+    public VCSFileName getFileName() {
+        return path.get(path.size() - 1);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
