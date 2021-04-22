@@ -43,10 +43,6 @@ public final class Sha1 extends Ref {
         return pattern.asMatchPredicate().test(hexString);
     }
 
-    public static String hint() {
-        return "string should have only lowercase hex letters and have length 40 to ve a valid sha1 hex string";
-    }
-
     public String getHexString() {
         return refString;
     }
