@@ -65,4 +65,11 @@ public class VCSPathTest {
         Assertions.assertThat(vcsPath.toUnixPathString())
                 .isEqualTo(unixPath);
     }
+
+    @Test
+    void testAbsolutePath() {
+        final var absPath = "/f";
+        Assertions.assertThat(VCSPath.isValidVCSPathString(absPath))
+                .isFalse();
+    }
 }
