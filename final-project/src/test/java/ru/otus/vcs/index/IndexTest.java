@@ -1,10 +1,9 @@
 package ru.otus.vcs.index;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.otus.vcs.exception.DeserializationException;
-import ru.otus.vcs.naming.VCSPath;
+import ru.otus.vcs.path.VCSPath;
+import ru.otus.vcs.ref.Sha1;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -26,7 +25,7 @@ public class IndexTest {
                 + createLineOfIndexEntryFormat(2, path, "b");
         Assertions.assertThatThrownBy(
                 () -> Index.deserialize(lines.getBytes(StandardCharsets.UTF_8))
-        ).isInstanceOf(DeserializationException.class);
+        ).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -37,7 +36,7 @@ public class IndexTest {
                 + createLineOfIndexEntryFormat(3, path, "b");
         Assertions.assertThatThrownBy(
                 () -> Index.deserialize(lines.getBytes(StandardCharsets.UTF_8))
-        ).isInstanceOf(DeserializationException.class);
+        ).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -48,7 +47,7 @@ public class IndexTest {
                 + createLineOfIndexEntryFormat(3, path, "b");
         Assertions.assertThatThrownBy(
                 () -> Index.deserialize(lines.getBytes(StandardCharsets.UTF_8))
-        ).isInstanceOf(DeserializationException.class);
+        ).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -131,19 +130,54 @@ public class IndexTest {
                 );
     }
 
+    @Test
+    void testRemoveCaseOfAbsentPath() {
+        final VCSPath path1 = VCSPath.create("a");
+        final VCSPath path2 = VCSPath.create("b");
+        Assertions.assertThat(
+                Index.create(
+                        List.of(IndexEntry.newNormalEntry(path1, sha1(path1))
+                        )
+                ).withRemovedIndexEntry(path2)
+        ).isNull();
+    }
+
+    @Test
+    void testRemoveCaseOfExistentPath1() {
+        final VCSPath path = VCSPath.create("a");
+        Assertions.assertThat(
+                Index.create(
+                        List.of(IndexEntry.newNormalEntry(path, sha1(path)))
+                ).withRemovedIndexEntry(path)
+        ).returns(true, Index::isEmpty);
+    }
+
+    @Test
+    void testRemoveCaseOfExistentPath2() {
+        final VCSPath path1 = VCSPath.create("a");
+        Assertions.assertThat(
+                Index.create(
+                        List.of(
+                                new IndexEntry(Stage.receiver, path1, sha1(path1)),
+                                new IndexEntry(Stage.giver, path1, sha1(path1, "a"))
+                        )
+                ).withRemovedIndexEntry(path1)
+        ).returns(true, Index::isEmpty);
+    }
+
     private static String createLineOfIndexEntryFormat(final int code, final VCSPath path, final String salt) {
-        return code + " " + path + " " + sha1(path, salt) + "\n";
+        return code + " " + path + " " + sha1(path, salt).getHexString() + "\n";
     }
 
     private static String createLineOfIndexEntryFormat(final int code, final VCSPath path) {
         return createLineOfIndexEntryFormat(code, path, "");
     }
 
-    private static String sha1(final VCSPath vcsPath) {
-        return DigestUtils.sha1Hex(vcsPath.toString());
+    private static Sha1 sha1(final VCSPath vcsPath) {
+        return Sha1.hash(vcsPath.toString());
     }
 
-    private static String sha1(final VCSPath vcsPath, final String salt) {
-        return DigestUtils.sha1Hex(vcsPath.toString() + salt);
+    private static Sha1 sha1(final VCSPath vcsPath, final String salt) {
+        return Sha1.hash(vcsPath.toString() + salt);
     }
 }

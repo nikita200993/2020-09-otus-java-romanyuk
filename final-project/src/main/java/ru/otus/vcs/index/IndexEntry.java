@@ -1,26 +1,18 @@
 package ru.otus.vcs.index;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.exception.DeserializationException;
-import ru.otus.vcs.naming.VCSPath;
-
-import java.util.Objects;
-
-import static ru.otus.vcs.utils.Utils.isSha1;
+import ru.otus.vcs.path.VCSPath;
+import ru.otus.vcs.ref.Sha1;
 
 public class IndexEntry {
     private final Stage stage;
-    /**
-     * Relative to working dir.
-     */
     private final VCSPath path;
-    private final String sha;
+    private final Sha1 sha;
 
-    IndexEntry(final Stage stage, final VCSPath path, final String sha) {
+    IndexEntry(final Stage stage, final VCSPath path, final Sha1 sha) {
         Contracts.requireNonNullArgument(stage);
         Contracts.requireNonNullArgument(path);
         Contracts.requireNonNullArgument(sha);
-        Contracts.requireThat(isSha1(sha));
 
         this.stage = stage;
         this.path = path;
@@ -30,39 +22,36 @@ public class IndexEntry {
     public static IndexEntry fromLineContent(final String content) {
         final int firstWs = content.indexOf(' ');
         final int lastWs = content.lastIndexOf(' ');
-        if (firstWs == -1) {
-            throw new DeserializationException("There is no whitespace in line = " + content);
-        } else if (firstWs == lastWs) {
-            throw new DeserializationException("There should be two whitespaces in line = " + content);
-        }
+        Contracts.requireThat(firstWs != -1, badLineContent(content) + " No whitespace.");
+        Contracts.requireThat(firstWs != lastWs, badLineContent(content) + " No second whitespace.");
         try {
             final int code = Integer.parseInt(content.substring(0, firstWs));
-            if (code < 0 || code > 3) {
-                throw new DeserializationException(String.format("Bad code %d in line '%s'.", code, content));
-            }
+            Contracts.requireThat(
+                    code >= 0 && code <= 3,
+                    String.format("Bad code %d in line '%s'.", code, content)
+            );
             final String path = content.substring(firstWs + 1, lastWs);
-            if (!VCSPath.isValidVCSPathString(path)) {
-                throw new DeserializationException(
-                        String.format(
-                                "Bad path = '%s' in line = '%s'. %s.",
-                                path,
-                                content,
-                                VCSPath.hint()
-                        )
-                );
-            }
+            Contracts.requireThat(
+                    VCSPath.isValidVCSPathString(path),
+                    String.format("Bad path = '%s' in line = '%s'.", path, content)
+            );
             final String sha1 = content.substring(lastWs + 1);
-            if (!isSha1(sha1)) {
-                throw new DeserializationException(String.format("Bad hash = '%s' in line = '%s'.", sha1, content));
-            }
-            return new IndexEntry(Stage.fromCode(code), VCSPath.create(path), sha1);
+            Contracts.requireThat(Sha1.isValidSha1HexString(sha1), badLineContent(content) + " Bad sha1.");
+            return new IndexEntry(Stage.fromCode(code), VCSPath.create(path), Sha1.create(sha1));
         } catch (final NumberFormatException ex) {
-            throw new DeserializationException("Can't parse int at the start of the line = '" + content + "'.", ex);
+            throw Contracts.unreachable(badLineContent(content) + " Unable to parse code at the start of hte line.");
         }
     }
 
+    public static IndexEntry newNormalEntry(final VCSPath vcsPath, final Sha1 sha) {
+        Contracts.requireNonNullArgument(vcsPath);
+        Contracts.requireNonNullArgument(sha);
+
+        return new IndexEntry(Stage.normal, vcsPath, sha);
+    }
+
     public String toLineContent() {
-        return stage.getCode() + " " + path + " " + sha;
+        return stage.getCode() + " " + path + " " + sha.getHexString();
     }
 
     public Stage getStage() {
@@ -73,8 +62,12 @@ public class IndexEntry {
         return path;
     }
 
-    public String getSha() {
+    public Sha1 getSha() {
         return sha;
+    }
+
+    private static String badLineContent(final String content) {
+        return "Bad line content '" + content + "'.";
     }
 
     @Override
