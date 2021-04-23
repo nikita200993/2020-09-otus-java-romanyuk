@@ -5,7 +5,6 @@ import ru.otus.vcs.config.GitConfig;
 import ru.otus.vcs.exception.InnerException;
 import ru.otus.vcs.index.Index;
 import ru.otus.vcs.objects.GitObject;
-import ru.otus.vcs.path.VCSPath;
 import ru.otus.vcs.ref.Sha1;
 
 import javax.annotation.Nullable;
@@ -104,12 +103,16 @@ public class GitRepository {
     }
 
     @SuppressWarnings("unchecked")
-    public <V extends GitObject> V readGitObject(final String sha) {
+    public <V extends GitObject> V readGitObjectOrThrowIfAbsent(final Sha1 sha) {
+        Contracts.requireNonNullArgument(sha);
+
         try {
-            Contracts.requireNonNullArgument(sha);
-            final String dirName = sha.substring(0, 2);
-            final String fileName = sha.substring(2);
+            final String dirName = sha.getHexString().substring(0, 2);
+            final String fileName = sha.getHexString().substring(2);
             final Path pathToFile = repoPath(Path.of(OBJECTS, dirName, fileName));
+
+            Contracts.requireThat(Files.exists(pathToFile, LinkOption.NOFOLLOW_LINKS));
+
             final byte[] raw = decompress(Files.readAllBytes(pathToFile));
             return (V) GitObject.deserialize(raw);
         } catch (final IOException ex) {
@@ -123,24 +126,23 @@ public class GitRepository {
      * @param gitObject object to save.
      * @return sha1 hex.
      */
-    public String saveGitObject(final GitObject gitObject) {
+    public Sha1 saveGitObjectIfAbsentAndReturnSha(final GitObject gitObject) {
         Contracts.requireNonNullArgument(gitObject);
 
         final var bytes = gitObject.serialize();
-        final String sha = Sha1.hash(bytes).getHexString();
-        final Path savePath = repoPath(Path.of(OBJECTS, sha.substring(0, 2), sha.substring(2)));
+        final var result = Sha1.hash(bytes);
+        final String shaHex = result.getHexString();
+        final Path savePath = repoPath(Path.of(OBJECTS, shaHex.substring(0, 2), shaHex.substring(2)));
         try {
             if (!Files.exists(savePath)) {
                 Files.createDirectories(savePath.getParent());
                 Files.write(savePath, compress(bytes), StandardOpenOption.CREATE_NEW);
                 savePath.toFile().setReadOnly();
-            } else {
-                throw new InnerException("Can't save git object. Object with the same hash " + sha + " already exists.");
             }
         } catch (final IOException ex) {
-            throw new UncheckedIOException("Can't save git object with sha '" + sha + "'.", ex);
+            throw new UncheckedIOException("Can't save git object with sha '" + shaHex + "'.", ex);
         }
-        return sha;
+        return result;
     }
 
     public Path repoPath(final Path relative) {

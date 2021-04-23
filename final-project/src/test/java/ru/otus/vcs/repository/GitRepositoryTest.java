@@ -55,11 +55,11 @@ public class GitRepositoryTest {
     }
 
     @Test
-    void testSaveObject(@TempDir final Path temp) throws IOException {
+    void testSaveObject(@TempDir final Path temp) {
         final var repo = GitRepository.createNew(temp);
         final var blob = new Blob("Kek".getBytes(StandardCharsets.UTF_8));
-        final var sha = repo.saveGitObject(blob);
-        Assertions.assertThat(repo.<Blob>readGitObject(sha))
+        final var sha = repo.saveGitObjectIfAbsentAndReturnSha(blob);
+        Assertions.assertThat(repo.<Blob>readGitObjectOrThrowIfAbsent(sha))
                 .isEqualTo(blob);
     }
 
