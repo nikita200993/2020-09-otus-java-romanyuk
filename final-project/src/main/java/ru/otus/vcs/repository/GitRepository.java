@@ -1,23 +1,27 @@
 package ru.otus.vcs.repository;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import ru.otus.utils.Contracts;
 import ru.otus.vcs.config.GitConfig;
 import ru.otus.vcs.exception.InnerException;
-import ru.otus.vcs.exception.UserException;
-import ru.otus.vcs.objects.DeserializationException;
+import ru.otus.vcs.index.Index;
 import ru.otus.vcs.objects.GitObject;
+import ru.otus.vcs.path.VCSPath;
+import ru.otus.vcs.ref.Sha1;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.Locale;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import static ru.otus.vcs.utils.Utils.compress;
 import static ru.otus.vcs.utils.Utils.decompress;
 
 public class GitRepository {
 
-    public static final String GITDIR = ".git";
+    public static final String GITDIR = ".simplegit";
     public static final String CONFIG = "config";
 
     private static final String BRANCHES = "branches";
@@ -27,6 +31,7 @@ public class GitRepository {
     private static final String HEADS = "heads";
     private static final String DESCRIPTION = "description";
     private static final String HEAD = "HEAD";
+    private static final String INDEX = "index";
     private static final String DEFAULT_HEAD_CONTENT = "ref: refs/heads/master" + System.lineSeparator();
     private static final String DEFAULT_DESCRIPTION_CONTENT = "Unnamed repository; edit this file 'description'"
             + "to name the repository." + System.lineSeparator();
@@ -41,32 +46,75 @@ public class GitRepository {
         this.config = config;
     }
 
-    public static GitRepository find(final String dirToSearchUpwards) {
+    public static GitRepository createNew(final Path pathToEmptyDir) {
+        Contracts.requireNonNullArgument(pathToEmptyDir);
+        checkContractsOnTheNewRepoPath(pathToEmptyDir);
+
         try {
-            final var realPath = Path.of(dirToSearchUpwards).toRealPath();
-            return find(realPath, realPath);
-        } catch (IOException ioException) {
-            throw wrapAsRepoCreationException(ioException);
+            final var realPathToEmptyDir = pathToEmptyDir.toRealPath(LinkOption.NOFOLLOW_LINKS);
+            final var defaultConfig = new GitConfig();
+            final var gitdir = realPathToEmptyDir.resolve(GITDIR);
+            createRepoLayout(gitdir, defaultConfig);
+            return new GitRepository(realPathToEmptyDir, gitdir, defaultConfig);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Unable to create repo for path = '" + pathToEmptyDir + "'.", ex);
         }
     }
 
-    public static GitRepository createNew(final String workdir) {
-        Contracts.requireNonNullArgument(workdir);
+    @Nullable
+    public static GitRepository find(final Path currentPathToSearch) {
+        Contracts.requireNonNullArgument(currentPathToSearch);
+        Contracts.requireThat(Files.exists(currentPathToSearch, LinkOption.NOFOLLOW_LINKS));
 
-        final var workdirPath = ensureUserProviderDirIsValidForNewRepo(workdir);
-        final var defaultConfig = new GitConfig();
-        createRepoLayout(workdirPath.resolve(GITDIR), defaultConfig);
-        return new GitRepository(workdirPath, workdirPath.resolve(GITDIR), defaultConfig);
+        try {
+            final var realPath = currentPathToSearch.toRealPath(LinkOption.NOFOLLOW_LINKS);
+            final Path repoPath = realPath.resolve(GITDIR);
+            if (Files.isDirectory(repoPath) && isRepositoryLayout(repoPath)) {
+                final var config = GitConfig.create(repoPath.resolve(CONFIG));
+                return new GitRepository(
+                        realPath,
+                        repoPath,
+                        config
+                );
+            } else if (realPath.getParent() == null) {
+                return null;
+            } else {
+                return find(realPath.getParent());
+            }
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("IO error while searching for git repository.", ex);
+        }
+    }
+
+    public Index readIndex() {
+        try {
+            return Index.deserialize(Files.readAllBytes(gitDir.resolve(INDEX)));
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("IO error reading index file.", ex);
+        }
+    }
+
+    public void saveIndex(final Index index) {
+        Contracts.requireNonNullArgument(index);
+        try {
+            Files.write(gitDir.resolve(INDEX), index.serialize());
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("IO error while writing index to file.", ex);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    public <V extends GitObject> V readGitObject(final String sha) throws IOException, DeserializationException {
-        Contracts.requireNonNullArgument(sha);
-        final String dirName = sha.substring(0, 2);
-        final String fileName = sha.substring(2);
-        final Path pathToFile = repoPath(Path.of(OBJECTS, dirName, fileName));
-        final byte[] raw = decompress(Files.readAllBytes(pathToFile));
-        return (V) GitObject.deserialize(raw);
+    public <V extends GitObject> V readGitObject(final String sha) {
+        try {
+            Contracts.requireNonNullArgument(sha);
+            final String dirName = sha.substring(0, 2);
+            final String fileName = sha.substring(2);
+            final Path pathToFile = repoPath(Path.of(OBJECTS, dirName, fileName));
+            final byte[] raw = decompress(Files.readAllBytes(pathToFile));
+            return (V) GitObject.deserialize(raw);
+        } catch (final IOException ex) {
+            throw new InnerException("Can't read object for sha = " + sha + ".", ex);
+        }
     }
 
     /**
@@ -79,17 +127,18 @@ public class GitRepository {
         Contracts.requireNonNullArgument(gitObject);
 
         final var bytes = gitObject.serialize();
-        final String sha = DigestUtils.sha1Hex(bytes).toLowerCase(Locale.ROOT);
+        final String sha = Sha1.hash(bytes).getHexString();
         final Path savePath = repoPath(Path.of(OBJECTS, sha.substring(0, 2), sha.substring(2)));
         try {
             if (!Files.exists(savePath)) {
                 Files.createDirectories(savePath.getParent());
                 Files.write(savePath, compress(bytes), StandardOpenOption.CREATE_NEW);
+                savePath.toFile().setReadOnly();
             } else {
                 throw new InnerException("Can't save git object. Object with the same hash " + sha + " already exists.");
             }
         } catch (final IOException ex) {
-            throw new InnerException("Can't save git object to path " + savePath, ex);
+            throw new UncheckedIOException("Can't save git object with sha '" + sha + "'.", ex);
         }
         return sha;
     }
@@ -110,35 +159,6 @@ public class GitRepository {
         return gitDir;
     }
 
-    private static GitRepository find(final Path currentDirToSearch, final Path startDir) {
-        try {
-            final Path repoPath = currentDirToSearch.resolve(GITDIR);
-            if (Files.exists(repoPath) && Files.isDirectory(repoPath)) {
-                checkRepositoryLayout(repoPath);
-                final var config = GitConfig.create(repoPath.resolve(CONFIG));
-                if (config.get(GitConfig.REPO_VER_KEY) != 0) {
-                    throw new RepoCreationException("Config value for key '" + GitConfig.REPO_VER_KEY.getName()
-                            + "' should be '0'");
-                }
-                checkRepositoryLayout(repoPath);
-                return new GitRepository(
-                        currentDirToSearch,
-                        repoPath,
-                        GitConfig.create(repoPath.resolve(CONFIG))
-                );
-            } else if (currentDirToSearch.getParent() == null) {
-                throw new UserException("Can't find .git dir. Searched upwards provided dir " + startDir);
-            } else {
-                return find(currentDirToSearch.getParent(), startDir);
-            }
-        } catch (GitConfig.ConfigReadException ex) {
-            throw new RepoCreationException(
-                    "Can't create repo from " + currentDirToSearch.resolve(GITDIR) + ". " + ex.getMessage(),
-                    ex
-            );
-        }
-    }
-
     private static void createRepoLayout(final Path gitdir, final GitConfig config) {
         try {
             Files.createDirectory(gitdir);
@@ -149,72 +169,44 @@ public class GitRepository {
             Files.createDirectories(gitdir.resolve(REFS).resolve(HEADS));
             Files.writeString(gitdir.resolve(DESCRIPTION), DEFAULT_DESCRIPTION_CONTENT);
             Files.writeString(gitdir.resolve(HEAD), DEFAULT_HEAD_CONTENT);
-        } catch (final IOException ioException) {
-            throw wrapAsRepoCreationException(ioException);
-        }
-    }
-
-    private static RepoCreationException wrapAsRepoCreationException(final Exception ex) {
-        return new RepoCreationException("Error creating new git repository. " + ex.getMessage(), ex);
-    }
-
-    private static void checkRepositoryLayout(final Path gitdir) {
-        checkLayoutFileIsPresent(gitdir, Path.of(CONFIG));
-        checkLayoutDirIsPresent(gitdir, Path.of(BRANCHES));
-        checkLayoutDirIsPresent(gitdir, Path.of(OBJECTS));
-        checkLayoutDirIsPresent(gitdir, Path.of(REFS));
-        checkLayoutDirIsPresent(gitdir, Path.of(REFS).resolve(TAGS));
-        checkLayoutDirIsPresent(gitdir, Path.of(REFS).resolve(HEADS));
-        checkLayoutFileIsPresent(gitdir, Path.of(DESCRIPTION));
-        checkLayoutFileIsPresent(gitdir, Path.of(HEAD));
-    }
-
-    private static void checkLayoutDirIsPresent(final Path gitdir, final Path relativePath) {
-        if (!Files.isDirectory(gitdir.resolve(relativePath))) {
-            throw new RepoCreationException(String.format("Bad repository layout. Directory %s is absent", relativePath));
-        }
-    }
-
-    private static void checkLayoutFileIsPresent(final Path gitdir, final Path relativePath) {
-        if (!Files.isRegularFile(gitdir.resolve(relativePath))) {
-            throw new RepoCreationException(String.format("Bad repository layout. File %s is absent", relativePath));
-        }
-    }
-
-    private static Path ensureUserProviderDirIsValidForNewRepo(final String workdir) {
-        try {
-            final var workdirPath = Path.of(workdir)
-                    .toAbsolutePath()
-                    .normalize();
-            if (!Files.exists(workdirPath)) {
-                throw new UserException("Directory " + workdir + "doesn't exist.");
-            }
-            if (!Files.isDirectory(workdirPath)) {
-                throw new UserException(workdir + " is not a directory.");
-            }
-            if (Files.list(workdirPath).count() != 0) {
-                throw new UserException(workdir + " is not empty.");
-            }
-            return workdirPath;
-        } catch (final InvalidPathException ex) {
-            throw new UserException(
-                    String.format("Bad input dir %s. %s", workdir, ex.getMessage()),
-                    ex
-            );
+            Files.createFile(gitdir.resolve(INDEX));
         } catch (final IOException ex) {
-            // exception thrown by Files.list is strange, cause we checked that arg is dir
-            throw wrapAsRepoCreationException(ex);
+            throw new UncheckedIOException("Can't create layout for repository at dir = " + gitdir + ".", ex);
         }
     }
 
-    public static class RepoCreationException extends InnerException {
 
-        private RepoCreationException(final String message) {
-            super(message);
-        }
+    private static boolean isRepositoryLayout(final Path gitdir) {
+        return isLayoutFileIsPresent(gitdir, Path.of(CONFIG))
+                && isLayoutDirIsPresent(gitdir, Path.of(BRANCHES))
+                && isLayoutDirIsPresent(gitdir, Path.of(OBJECTS))
+                && isLayoutDirIsPresent(gitdir, Path.of(REFS))
+                && isLayoutDirIsPresent(gitdir, Path.of(REFS).resolve(TAGS))
+                && isLayoutDirIsPresent(gitdir, Path.of(REFS).resolve(HEADS))
+                && isLayoutFileIsPresent(gitdir, Path.of(DESCRIPTION))
+                && isLayoutFileIsPresent(gitdir, Path.of(HEAD))
+                && isLayoutFileIsPresent(gitdir, Path.of(INDEX));
+    }
 
-        private RepoCreationException(final String message, final Throwable cause) {
-            super(message, cause);
+    private static boolean isLayoutDirIsPresent(final Path gitdir, final Path relativePath) {
+        return Files.isDirectory(gitdir.resolve(relativePath));
+    }
+
+    private static boolean isLayoutFileIsPresent(final Path gitdir, final Path relativePath) {
+        return Files.isRegularFile(gitdir.resolve(relativePath));
+    }
+
+    private static void checkContractsOnTheNewRepoPath(final Path realPathToEmptyDir) {
+        try {
+            Contracts.requireThat(
+                    Files.isDirectory(realPathToEmptyDir),
+                    realPathToEmptyDir + " is not an empty dir."
+            );
+            Contracts.requireThat(Files.list(realPathToEmptyDir).count() == 0, "Dir is not empty.");
+        } catch (final IOException ex) {
+            throw new UncheckedIOException(
+                    "IO error while checking contracts for path = '" + realPathToEmptyDir + "'.",
+                    ex);
         }
     }
 }
