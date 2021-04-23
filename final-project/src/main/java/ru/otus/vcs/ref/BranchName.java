@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 public final class BranchName extends Ref {
 
     /**
-     * Should be compatible with {@link ru.otus.vcs.naming.VCSFileName}.
+     * Should be compatible with {@link ru.otus.vcs.path.VCSFileName}.
      */
     private static final Pattern namePattern = Pattern.compile("^[a-zA-Z0-9-_]{1,200}$");
 

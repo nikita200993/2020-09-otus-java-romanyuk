@@ -6,6 +6,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import ru.otus.utils.Contracts;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public final class Sha1 extends Ref {
@@ -25,7 +26,8 @@ public final class Sha1 extends Ref {
     public static Sha1 hash(final byte[] content) {
         Contracts.requireNonNullArgument(content);
 
-        final var hex = DigestUtils.sha1Hex(content);
+        final var hex = DigestUtils.sha1Hex(content)
+                .toLowerCase(Locale.ROOT);
         Contracts.requireThat(pattern.asMatchPredicate().test(hex));
         return new Sha1(hex);
     }
