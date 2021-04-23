@@ -35,6 +35,13 @@ public class VCSPath {
         );
     }
 
+    public static VCSPath create(final Path path) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.requireThat(isValidVCSPath(path));
+
+        return create(path.toString().replace(File.separator, separator));
+    }
+
     public static boolean isValidVCSPathString(final String path) {
         Contracts.requireNonNull(path);
         final var split = path.split(separator);
@@ -43,6 +50,13 @@ public class VCSPath {
         }
         return Arrays.stream(split)
                 .allMatch(VCSFileName::isValidVCSFileName);
+    }
+
+//    TODO: test "/afd"
+    public static boolean isValidVCSPath(final Path path) {
+        Contracts.requireNonNull(path);
+
+        return isValidVCSPathString(path.toString().replace(File.separator, separator));
     }
 
     public Path toOsPath() {
