@@ -1,78 +1,76 @@
 package ru.otus.vcs.objects;
 
 import ru.otus.utils.Contracts;
+import ru.otus.vcs.exception.DeserializationException;
+import ru.otus.vcs.ref.Sha1;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static ru.otus.vcs.utils.Utils.*;
+import static ru.otus.vcs.utils.Utils.concat;
+import static ru.otus.vcs.utils.Utils.indexOf;
+import static ru.otus.vcs.utils.Utils.utf8;
 
 public abstract class GitObject {
 
     public static GitObject deserialize(final byte[] bytes) throws DeserializationException {
         Contracts.requireNonNullArgument(bytes);
 
-        try {
-            final int firstWsPos = indexOf(bytes, (byte) ' ', 0, bytes.length);
-            if (firstWsPos == -1) {
-                throw badFormat("Can read type of object.");
-            }
-            final String type = utf8(Arrays.copyOfRange(bytes, 0, firstWsPos));
-            final int nullBytePos = indexOf(bytes, (byte) 0, firstWsPos + 1, bytes.length);
-            if (nullBytePos == -1 || firstWsPos + 1 >= nullBytePos) {
-                throw badFormat("Can't find size part of content.");
-            }
-            final int size = parseSize(utf8(Arrays.copyOfRange(bytes, firstWsPos + 1, nullBytePos)));
-            if (size != bytes.length - nullBytePos - 1) {
-                throw badFormat("Size read from byte array is not equal to actual size");
-            }
-            final byte[] content = Arrays.copyOfRange(bytes, nullBytePos + 1, bytes.length);
-            switch (type) {
-                case Blob.type:
-                    return new Blob(content);
-                case Tree.type:
-                    return Tree.deserialize(content);
-                case Commit.type:
-                    return Commit.deserialize(content);
-                default:
-                    throw badFormat("Not a git object type " + type);
-            }
-        } catch (final Exception ex) {
-            if (ex instanceof DeserializationException) {
-                throw ex;
-            } else {
-                throw new DeserializationException("Can't deserialize data. " + ex.getClass() + " " + ex.getMessage(), ex);
-            }
+        final int firstWsPos = indexOf(bytes, (byte) ' ', 0, bytes.length);
+        Contracts.requireThat(firstWsPos != -1, badFormat("No whitespace."));
+        final String typeName = utf8(Arrays.copyOfRange(bytes, 0, firstWsPos));
+        Contracts.requireThat(ObjectType.isValidName(typeName), badFormat("Invalid type string."));
+        final var type = ObjectType.forName(typeName);
+        final int nullBytePos = indexOf(bytes, (byte) 0, firstWsPos + 1, bytes.length);
+        Contracts.requireThat(nullBytePos != -1, badFormat("No null byte."));
+        Contracts.requireThat(
+                nullBytePos > firstWsPos,
+                badFormat("Null byte must be after first whitespace.")
+        );
+        final int size = parseSize(utf8(Arrays.copyOfRange(bytes, firstWsPos + 1, nullBytePos)));
+        Contracts.requireThat(
+                size == bytes.length - nullBytePos - 1,
+                badFormat("Actual size is not equal to declared.")
+        );
+        final byte[] content = Arrays.copyOfRange(bytes, nullBytePos + 1, bytes.length);
+        switch (type) {
+            case Blob:
+                return new Blob(content);
+            case Tree:
+                return Tree.deserialize(content);
+            case Commit:
+                return Commit.deserialize(content);
+            default:
+                throw Contracts.unreachable();
         }
     }
 
-    public abstract String getType();
+    public abstract ObjectType getType();
 
     public abstract byte[] serializeContent();
 
     public final byte[] serialize() {
         final var content = serializeContent();
-        final var prefix = (getType() +
+        final var prefix = (getType().getName() +
                 ' ' +
                 content.length +
                 (char) 0).getBytes(StandardCharsets.UTF_8);
         return concat(prefix, content);
     }
 
+    public Sha1 sha1() {
+        return Sha1.hash(serialize());
+    }
+
     private static int parseSize(final String size) {
         try {
             return Integer.parseInt(size);
         } catch (final NumberFormatException ex) {
-            throw badFormat("Can't parse size.", ex);
+            throw Contracts.unreachable(badFormat("Can't parse size."));
         }
     }
 
-    private static DeserializationException badFormat(final String additionalInfo) {
-        return new DeserializationException("Bad format of content. " + additionalInfo);
+    private static String badFormat(final String additionalInfo) {
+        return "Bad format of object data. " + additionalInfo;
     }
-
-    private static DeserializationException badFormat(final String additionalInfo, final Throwable cause) {
-        return new DeserializationException("Bad format of content. " + additionalInfo, cause);
-    }
-
 }

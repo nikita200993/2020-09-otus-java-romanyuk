@@ -6,8 +6,6 @@ import java.util.Arrays;
 
 public class Blob extends GitObject {
 
-    public static final String type = "blob";
-
     private final byte[] content;
 
     public Blob(final byte[] content) {
@@ -16,8 +14,8 @@ public class Blob extends GitObject {
     }
 
     @Override
-    public String getType() {
-        return type;
+    public ObjectType getType() {
+        return ObjectType.Blob;
     }
 
     @Override

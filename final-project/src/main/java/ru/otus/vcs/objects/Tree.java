@@ -35,8 +35,8 @@ public class Tree extends GitObject {
     }
 
     @Override
-    public String getType() {
-        return type;
+    public ObjectType getType() {
+        return ObjectType.Tree;
     }
 
     @Override

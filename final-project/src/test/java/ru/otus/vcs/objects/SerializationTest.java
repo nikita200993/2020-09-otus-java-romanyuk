@@ -3,13 +3,10 @@ package ru.otus.vcs.objects;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.otus.vcs.ref.Sha1;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 public class SerializationTest {
@@ -50,16 +47,65 @@ public class SerializationTest {
     }
 
     @Test
-    void testCommitSerialization() throws IOException, URISyntaxException {
-        final var realCommitData = Files.readAllBytes(
-                Path.of(
-                        SerializationTest.class.getResource("/commit")
-                                .toURI()
-                )
-        );
-        System.out.println(Arrays.toString(realCommitData));
-        final var commit = GitObject.deserialize(realCommitData);
-        Assertions.assertThat(commit.serialize())
-                .isEqualTo(realCommitData);
+    void testCommitSerialization() {
+        final var commit = new Commit(Sha1.hash("a"), Sha1.hash("b"), null, "adsa", "fasdf");
+
+        Assertions.assertThat(GitObject.deserialize(commit.serialize()))
+                .isEqualTo(commit);
     }
+
+    @Test
+    void testCommitSerializationNoBlankLine() {
+        final var dataWithNoBlankLine = "tree " + Sha1.hash("a") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "author vasya\n"
+                + "message\n";
+
+        Assertions.assertThatThrownBy(
+                () -> Commit.deserialize(dataWithNoBlankLine.getBytes(StandardCharsets.UTF_8))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void testCommitSerializationMoreThanTwoParents() {
+        final var manyParents = "tree " + Sha1.hash("a") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "author vasya\n"
+                + "\n"
+                + "message\n";
+
+        Assertions.assertThatThrownBy(
+                () -> Commit.deserialize(manyParents.getBytes(StandardCharsets.UTF_8))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void testCommitSerializationNoTree() {
+        final var noTree = "parent " + Sha1.hash("b") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "author vasya\n"
+                + "\n"
+                + "message\n";
+
+        Assertions.assertThatThrownBy(
+                () -> Commit.deserialize(noTree.getBytes(StandardCharsets.UTF_8))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void testCommitSerializationNoAuthor() {
+        final var noTree = "tree " + Sha1.hash("a") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "parent " + Sha1.hash("b") + "\n"
+                + "\n"
+                + "message\n";
+        Assertions.assertThatThrownBy(
+                () -> Commit.deserialize(noTree.getBytes(StandardCharsets.UTF_8))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
 }

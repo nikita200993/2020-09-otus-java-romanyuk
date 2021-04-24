@@ -1,112 +1,206 @@
 package ru.otus.vcs.objects;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.exception.InnerException;
+import ru.otus.vcs.ref.Sha1;
 
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 import static ru.otus.vcs.utils.Utils.utf8;
 
 public class Commit extends GitObject {
 
-    public static final String type = "commit";
+    private static final String TREE_HEADER = "tree";
+    private static final String PARENT_HEADER = "parent";
+    private static final String AUTHOR_HEADER = "author";
 
-    private final LinkedHashMap<String, List<String>> keyValues;
+    private final Sha1 treeSha;
+    @Nullable
+    private final Sha1 firstParentSha;
+    @Nullable
+    private final Sha1 secondParentSha;
+    private final String author;
     private final String message;
 
     public static Commit deserialize(final byte[] data) {
+        Contracts.requireNonNullArgument(data);
+
         final var content = utf8(data);
-        System.out.println(content);
-        final var keyValues = new LinkedHashMap<String, List<String>>();
-        String message = null;
-        int position = 0;
-        int valueStart = -1;
-        String currentKey = null;
-        while (position < content.length()) {
-            final int wsPos = content.indexOf(' ', position);
-            final int eolPos = content.indexOf('\n', position);
-            if (wsPos == -1 || eolPos < wsPos) {
-                if (valueStart == -1) {
-                    throw new DeserializationException("Bad commit format. Value was not matched before message.");
-                }
-                message = content.substring(position + 1);
-            } else if (wsPos == position && valueStart == -1) {
-                throw new DeserializationException("Bad commit format. Error at position " + position);
-            } else if (wsPos == position) {
-                position = eolPos + 1;
+        final var lines = content.split("\n");
+        Contracts.requireThat(
+                lines.length > 3,
+                "Should contain at least tree info, author info, blank line and message");
+        Sha1 tree = null;
+        final List<Sha1> parents = new ArrayList<>();
+        String author = null;
+        String message = "";
+        boolean sawBlankLine = false;
+        for (final var line : lines) {
+            if (sawBlankLine) {
+                message = message + line + "\n";
+                continue;
+            } else if (line.isEmpty()) {
+                sawBlankLine = true;
                 continue;
             }
-            if (valueStart != -1) {
-                Contracts.ensureNonNull(currentKey);
-                keyValues.computeIfAbsent(currentKey, unused -> new ArrayList<>())
-                        .add(
-                                content.substring(
-                                        valueStart,
-                                        position - 1
-                                ).replace("\n ", "\n")
-                        );
+            final int firstWs = line.indexOf(' ');
+            Contracts.requireThat(firstWs != -1, badFormat("No whitespace in line '" + line + "'."));
+            final String header = line.substring(0, firstWs);
+            final String value = line.substring(firstWs + 1);
+            switch (header) {
+                case TREE_HEADER:
+                    Contracts.requireThat(tree == null, badFormat("There was already tree header."));
+                    Contracts.requireThat(
+                            Sha1.isValidSha1HexString(value),
+                            badFormat("Bad sha1 in line = '" + line + "'.")
+                    );
+                    tree = Sha1.create(value);
+                    break;
+                case PARENT_HEADER:
+                    Contracts.requireThat(
+                            Sha1.isValidSha1HexString(value),
+                            badFormat("Bad sha1 in line = '" + line + "'.")
+                    );
+                    parents.add(Sha1.create(value));
+                    break;
+                case AUTHOR_HEADER:
+                    Contracts.requireThat(author == null, badFormat("There was already author header."));
+                    Contracts.requireThat(isValidAuthor(value), badFormat("Bad author value = " + value));
+                    author = value;
+                    break;
+                default:
+                    throw Contracts.unreachable(badFormat("Bad header in line '" + line + "'."));
             }
-            if (message != null) {
-                return new Commit(keyValues, message);
-            }
-            currentKey = content.substring(position, wsPos);
-            valueStart = wsPos + 1;
-            position = eolPos + 1;
         }
-        throw new DeserializationException("Bad commit format. No blank line met before message.");
+        // remove last new line
+        message = message.substring(0, message.length() - 1);
+        Contracts.requireNonNull(tree, badFormat("There was no tree info."));
+        Contracts.requireThat(parents.size() <= 2, badFormat("More than two parents."));
+        Contracts.requireNonNull(author, badFormat("There was no author info."));
+        Contracts.requireThat(isValidMessage(message), "Message is invalid.");
+        final Sha1 firstParent;
+        final Sha1 secondParent;
+        if (parents.size() == 0) {
+            firstParent = null;
+            secondParent = null;
+        } else if (parents.size() == 1) {
+            firstParent = parents.get(0);
+            secondParent = null;
+        } else {
+            firstParent = parents.get(0);
+            secondParent = parents.get(1);
+        }
+        return new Commit(tree, firstParent, secondParent, author, message);
     }
 
-    public Commit(final LinkedHashMap<String, List<String>> keyValues, final String message) {
-        Contracts.requireNonNullArgument(keyValues);
+    public Commit(
+            final Sha1 treeSha,
+            @Nullable final Sha1 firstParentSha,
+            @Nullable final Sha1 secondParentSha,
+            final String author,
+            final String message) {
+        Contracts.requireNonNullArgument(treeSha);
+        Contracts.forbidThat(firstParentSha == null && secondParentSha != null);
+        Contracts.requireNonNullArgument(author);
         Contracts.requireNonNullArgument(message);
+        Contracts.requireThat(isValidAuthor(author));
+        Contracts.requireThat(isValidMessage(message));
 
-        this.keyValues = copyMap(keyValues);
+        this.treeSha = Contracts.ensureNonNullArgument(treeSha);
+        this.firstParentSha = firstParentSha;
+        this.secondParentSha = secondParentSha;
+        this.author = author;
         this.message = message;
     }
 
     @Override
-    public String getType() {
-        return type;
+    public ObjectType getType() {
+        return ObjectType.Commit;
     }
 
     @Override
     public byte[] serializeContent() {
         final var strBuilder = new StringBuilder();
-        for (final var entry : keyValues.entrySet()) {
-            final var key = entry.getKey();
-            final var values = entry.getValue();
-            for (final var value : values) {
-                strBuilder.append(key)
-                        .append(' ')
-                        .append(value.replace("\n", " \n"))
-                        .append('\n');
-            }
-        }
-        strBuilder.append("\n")
-                .append(message);
+        putSha(strBuilder, treeSha, TREE_HEADER);
+        putSha(strBuilder, firstParentSha, PARENT_HEADER);
+        putSha(strBuilder, secondParentSha, PARENT_HEADER);
+        strBuilder.append(AUTHOR_HEADER)
+                .append(' ')
+                .append(author)
+                .append('\n')
+                .append('\n')
+                .append(message)
+                .append('\n');
         return strBuilder.toString()
                 .getBytes(StandardCharsets.UTF_8);
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public String getTreeSha() {
-        final var tree = keyValues.get(Tree.type);
-        if (tree == null || tree.size() != 1) {
-            throw new InnerException("There should be single tree in commit.");
+    private static void putSha(final StringBuilder stringBuilder, @Nullable final Sha1 sha1, final String headerName) {
+        if (sha1 == null) {
+            return;
         }
-        return tree.get(0);
+        stringBuilder.append(headerName)
+                .append(' ')
+                .append(sha1.getHexString())
+                .append('\n');
     }
 
-    private static LinkedHashMap<String, List<String>> copyMap(final Map<String, List<String>> orig) {
-        final var copy = new LinkedHashMap<>(orig);
-        copy.replaceAll((k, v) -> List.copyOf(v));
-        return copy;
+    private static boolean isValidAuthor(final String author) {
+        return !author.isBlank();
+    }
+
+    private static boolean isValidMessage(final String message) {
+        return !message.isBlank();
+    }
+
+    private static String badFormat(final String additionalInfo) {
+        return "Bad format of commit data. " + additionalInfo;
+    }
+
+    public Sha1 getTreeSha() {
+        return treeSha;
+    }
+
+    @Nullable
+    public Sha1 getFirstParentSha() {
+        return firstParentSha;
+    }
+
+    @Nullable
+    public Sha1 getSecondParentSha() {
+        return secondParentSha;
+    }
+
+    public boolean isFirstCommit() {
+        return firstParentSha == null && secondParentSha == null;
+    }
+
+    public boolean isMergeCommit() {
+        return firstParentSha != null && secondParentSha != null;
+    }
+
+    public boolean isLinearCommit() {
+        return firstParentSha != null && secondParentSha == null;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Commit commit = (Commit) o;
+        return treeSha.equals(commit.treeSha)
+                && Objects.equals(firstParentSha, commit.firstParentSha)
+                && Objects.equals(secondParentSha, commit.secondParentSha)
+                && author.equals(commit.author)
+                && message.equals(commit.message);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(treeSha, firstParentSha, secondParentSha, author, message);
     }
 }
