@@ -11,6 +11,10 @@ public final class BranchName extends Ref {
      */
     private static final Pattern namePattern = Pattern.compile("^[a-zA-Z0-9-_]{1,200}$");
 
+    public static String getNamePattern() {
+        return namePattern.pattern().substring(1, namePattern.pattern().length() - 1);
+    }
+
     private BranchName(String refString) {
         super(refString);
     }

@@ -12,7 +12,7 @@ public abstract class Ref {
         this.refString = refString;
     }
 
-    protected String getRefString() {
+    public String getRefString() {
         return refString;
     }
 
