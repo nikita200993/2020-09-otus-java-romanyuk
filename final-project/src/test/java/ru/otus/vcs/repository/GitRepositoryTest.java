@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import ru.otus.vcs.objects.Blob;
 import ru.otus.vcs.path.VCSPath;
+import ru.otus.vcs.ref.BranchName;
 import ru.otus.vcs.ref.Sha1;
 
 import java.io.IOException;
@@ -15,8 +16,11 @@ import java.nio.file.Path;
 
 public class GitRepositoryTest {
 
+    @TempDir
+    Path temp;
+
     @Test
-    void createNewRepoSuccessfulCase(@TempDir final Path temp) {
+    void createNewRepoSuccessfulCase() {
         final var repo = GitRepository.createNew(temp);
         Assertions.assertThat(repo.getGitDir())
                 .exists()
@@ -25,20 +29,20 @@ public class GitRepositoryTest {
     }
 
     @Test
-    void createNewRepoWithNonExistentDir(@TempDir final Path temp) {
+    void createNewRepoWithNonExistentDir() {
         Assertions.assertThatThrownBy(() -> GitRepository.createNew(temp.resolve("abc")))
                 .isExactlyInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void createNewRepoWithGitDirAlreadyExists(@TempDir final Path temp) throws IOException {
+    void createNewRepoWithGitDirAlreadyExists() throws IOException {
         Files.createDirectory(temp.resolve(GitRepository.GITDIR));
         Assertions.assertThatThrownBy(() -> GitRepository.createNew(temp))
                 .isExactlyInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void testFindRepo(@TempDir final Path temp) throws IOException {
+    void testFindRepo() throws IOException {
         GitRepository.createNew(temp);
         final Path dirToSearch = temp.resolve("abc");
         Files.createDirectory(dirToSearch);
@@ -49,22 +53,22 @@ public class GitRepositoryTest {
     }
 
     @Test
-    void testFindRepoFailingCase(@TempDir final Path temp) {
+    void testFindRepoFailingCase() {
         Assertions.assertThat(GitRepository.find(temp))
                 .isNull();
     }
 
     @Test
-    void testSaveObject(@TempDir final Path temp) {
+    void testSaveObject() {
         final var repo = GitRepository.createNew(temp);
         final var blob = new Blob("Kek".getBytes(StandardCharsets.UTF_8));
-        final var sha = repo.saveGitObjectIfAbsentAndReturnSha(blob);
-        Assertions.assertThat(repo.<Blob>readGitObjectOrThrowIfAbsent(sha))
+        repo.saveGitObjectIfAbsent(blob);
+        Assertions.assertThat(repo.readGitObjectOrThrowIfAbsent(blob.sha1()))
                 .isEqualTo(blob);
     }
 
     @Test
-    void testReadingAndSavingIndex(@TempDir final Path temp) {
+    void testReadingAndSavingIndex() {
         final var repo = GitRepository.createNew(temp);
         final var index = repo.readIndex();
         Assertions.assertThat(repo.readIndex().isEmpty())
@@ -73,5 +77,19 @@ public class GitRepositoryTest {
         repo.saveIndex(newIndex);
         Assertions.assertThat(repo.readIndex())
                 .isEqualTo(newIndex);
+    }
+
+    @Test
+    void testHasBranchMasterCase() {
+        final var repo = GitRepository.createNew(temp);
+        Assertions.assertThat(repo.hasBranch(BranchName.create("master")))
+                .isTrue();
+    }
+
+    @Test
+    void testHasBranchNonMasterAbsentCase() {
+        final var repo = GitRepository.createNew(temp);
+        Assertions.assertThat(repo.hasBranch(BranchName.create("lol")))
+                .isFalse();
     }
 }
