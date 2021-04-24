@@ -86,10 +86,10 @@ public class TreeLeaf {
     }
 
     private static Tuple2<Sha1, Integer> deserializeSha(final byte[] entriesList, final int start) {
-        Contracts.requireThat(start + 40 <= entriesList.length, "Bad tree leaf data. Bad sha.");
-        final var shaHex = utf8(Arrays.copyOfRange(entriesList, start, start + 40));
+        Contracts.requireThat(start + Sha1.HEX_STRING_LENGTH <= entriesList.length, "Bad tree leaf data. Bad sha.");
+        final var shaHex = utf8(Arrays.copyOfRange(entriesList, start, start + Sha1.HEX_STRING_LENGTH));
         Contracts.requireThat(Sha1.isValidSha1HexString(shaHex), "Bad hex string value = " + shaHex + ".");
-        return new Tuple2<>(Sha1.create(shaHex), start + 40);
+        return new Tuple2<>(Sha1.create(shaHex), start + Sha1.HEX_STRING_LENGTH);
     }
 
     @Override
