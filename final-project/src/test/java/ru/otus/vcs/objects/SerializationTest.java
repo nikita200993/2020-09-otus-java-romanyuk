@@ -1,12 +1,11 @@
 package ru.otus.vcs.objects;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.otus.vcs.path.VCSFileName;
 import ru.otus.vcs.ref.Sha1;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.List;
 
 public class SerializationTest {
@@ -21,9 +20,9 @@ public class SerializationTest {
     @Test
     void testTreeLeafSerialization() {
         final var leaf = new TreeLeaf(
-                FileMode.REGULAR,
-                Path.of("файл"),
-                DigestUtils.sha1Hex("привет")
+                FileType.Regular,
+                VCSFileName.create("hey"),
+                Sha1.hash("a")
         );
         Assertions.assertThat(TreeLeaf.deserialize(leaf.serialize()))
                 .isEqualTo(leaf);
@@ -32,14 +31,14 @@ public class SerializationTest {
     @Test
     void testTreeSerialization() {
         final var first = new TreeLeaf(
-                FileMode.REGULAR,
-                Path.of("файл"),
-                DigestUtils.sha1Hex("привет")
+                FileType.Directory,
+                VCSFileName.create("abc"),
+                Sha1.hash("b")
         );
         final var second = new TreeLeaf(
-                FileMode.SYMLINK,
-                Path.of("симвссылка"),
-                DigestUtils.sha1Hex("файл")
+                FileType.Regular,
+                VCSFileName.create("zz"),
+                Sha1.hash("a")
         );
         final var tree = new Tree(List.of(first, second));
         Assertions.assertThat(GitObject.deserialize(tree.serialize()))
