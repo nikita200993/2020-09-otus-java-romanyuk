@@ -4,13 +4,17 @@ import ru.otus.utils.Contracts;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 public class VCSPath {
+
+    public static final VCSPath root = new VCSPath(Collections.emptyList());
 
     private static final String separator = "/";
 
@@ -57,6 +61,12 @@ public class VCSPath {
         Contracts.requireNonNull(path);
 
         return isValidVCSPathString(path.toString().replace(File.separator, separator));
+    }
+
+    public VCSPath resolve(final VCSFileName fileName) {
+        final var copy = new ArrayList<>(path);
+        copy.add(fileName);
+        return new VCSPath(copy);
     }
 
     public Path toOsPath() {
