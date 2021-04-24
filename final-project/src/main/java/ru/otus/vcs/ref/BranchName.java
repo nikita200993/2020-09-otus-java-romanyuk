@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 
 public final class BranchName extends Ref {
 
+    public static final String MASTER = "master";
+
     /**
      * Should be compatible with {@link ru.otus.vcs.path.VCSFileName}.
      */
@@ -36,6 +38,10 @@ public final class BranchName extends Ref {
         Contracts.requireThat(isValidBranchName(refString));
 
         return new BranchName(refString);
+    }
+
+    public boolean isMaster() {
+        return refString.equals(MASTER);
     }
 
     @Override
