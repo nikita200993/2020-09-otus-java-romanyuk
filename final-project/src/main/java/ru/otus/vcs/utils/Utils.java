@@ -80,6 +80,9 @@ public class Utils {
             return new byte[0];
         }
         final var result = Arrays.copyOf(byteArrays.get(0), totalBytesOpt.get());
+        if (byteArrays.size() == 1) {
+            return result;
+        }
         var arrayToConcat = byteArrays.get(1);
         int start = byteArrays.get(0).length;
         for (int i = 1; i < byteArrays.size(); i++) {

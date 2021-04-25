@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 public final class Sha1 extends Ref {
 
+    public static int HEX_STRING_LENGTH = 40;
+
     private static final Pattern pattern = Pattern.compile("^[a-f0-9]{40}$");
 
     private Sha1(final String hex) {

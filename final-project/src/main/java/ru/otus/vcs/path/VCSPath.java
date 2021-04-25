@@ -63,6 +63,23 @@ public class VCSPath {
         return isValidVCSPathString(path.toString().replace(File.separator, separator));
     }
 
+    public boolean isRoot() {
+        return this == root;
+    }
+
+    public VCSPath getParent() {
+        Contracts.requireThat(path.size() > 0);
+
+        if (path.size() == 1) {
+            return root;
+        }
+        return new VCSPath(path.subList(0, path.size() - 1));
+    }
+
+    public int length() {
+        return path.size();
+    }
+
     public VCSPath resolve(final VCSFileName fileName) {
         final var copy = new ArrayList<>(path);
         copy.add(fileName);
