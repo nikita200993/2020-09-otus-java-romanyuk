@@ -129,7 +129,7 @@ public class Tree extends GitObject {
 
     private static MutableGraph<VCSPath> buildGraph(final Iterable<VCSPath> iterable) {
         final MutableGraph<VCSPath> graph = GraphBuilder.directed()
-                .incidentEdgeOrder(ElementOrder.sorted(Comparator.comparing(VCSPath::toString)))
+                .incidentEdgeOrder(ElementOrder.stable())
                 .build();
         for (final var path : iterable) {
             var currentPath = path;
