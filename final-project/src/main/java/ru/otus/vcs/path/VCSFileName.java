@@ -31,10 +31,6 @@ public final class VCSFileName {
         return !".".equals(name) && !"..".equals(name) && pattern.asMatchPredicate().test(name);
     }
 
-    public static String hint() {
-        return "name shouldn't equal to '.' or '..' and should follow " + pattern.pattern();
-    }
-
     public String getName() {
         return name;
     }

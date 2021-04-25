@@ -1,6 +1,7 @@
 package ru.otus.vcs.path;
 
 import ru.otus.utils.Contracts;
+import ru.otus.vcs.repository.GitRepository;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -52,6 +53,9 @@ public class VCSPath {
         if (split.length == 0) {
             return false;
         }
+        if (path.startsWith(GitRepository.GITDIR)) {
+            return false;
+        }
         return Arrays.stream(split)
                 .allMatch(VCSFileName::isValidVCSFileName);
     }
@@ -61,6 +65,12 @@ public class VCSPath {
         Contracts.requireNonNull(path);
 
         return isValidVCSPathString(path.toString().replace(File.separator, separator));
+    }
+
+    public VCSFileName getName(final int index) {
+        Contracts.requireThat(index >= 0 && index < path.size());
+
+        return path.get(index);
     }
 
     public boolean isRoot() {
