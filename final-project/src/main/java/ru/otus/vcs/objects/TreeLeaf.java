@@ -12,7 +12,6 @@ import java.util.Objects;
 import static ru.otus.vcs.utils.Utils.indexOf;
 import static ru.otus.vcs.utils.Utils.utf8;
 
-
 public class TreeLeaf {
 
     private final FileType type;
