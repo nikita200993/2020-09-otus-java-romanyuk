@@ -19,4 +19,10 @@ public class Deletion extends VCSFileChange {
     public VCSPath getChangePath() {
         return deletedFileDesc.getPath();
     }
+
+    @Override
+    public String toString() {
+        return "removed file " + deletedFileDesc.getPath().toOsPath()
+                + " with hash " + deletedFileDesc.getSha().getHexString();
+    }
 }

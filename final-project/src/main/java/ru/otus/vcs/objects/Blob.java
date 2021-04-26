@@ -13,6 +13,10 @@ public class Blob extends GitObject {
         this.content = Arrays.copyOf(content, content.length);
     }
 
+    public byte[] getContent() {
+        return content.clone();
+    }
+
     @Override
     public ObjectType getType() {
         return ObjectType.Blob;

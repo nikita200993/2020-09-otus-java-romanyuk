@@ -25,6 +25,26 @@ public class Commit extends GitObject {
     private final String author;
     private final String message;
 
+    public Commit(
+            final Sha1 treeSha,
+            @Nullable final Sha1 firstParentSha,
+            @Nullable final Sha1 secondParentSha,
+            final String author,
+            final String message) {
+        Contracts.requireNonNullArgument(treeSha);
+        Contracts.forbidThat(firstParentSha == null && secondParentSha != null);
+        Contracts.requireNonNullArgument(author);
+        Contracts.requireNonNullArgument(message);
+        Contracts.requireThat(isValidAuthor(author));
+        Contracts.requireThat(isValidMessage(message));
+
+        this.treeSha = Contracts.ensureNonNullArgument(treeSha);
+        this.firstParentSha = firstParentSha;
+        this.secondParentSha = secondParentSha;
+        this.author = author;
+        this.message = message;
+    }
+
     public static Commit deserialize(final byte[] data) {
         Contracts.requireNonNullArgument(data);
 
@@ -96,24 +116,12 @@ public class Commit extends GitObject {
         return new Commit(tree, firstParent, secondParent, author, message);
     }
 
-    public Commit(
-            final Sha1 treeSha,
-            @Nullable final Sha1 firstParentSha,
-            @Nullable final Sha1 secondParentSha,
-            final String author,
-            final String message) {
-        Contracts.requireNonNullArgument(treeSha);
-        Contracts.forbidThat(firstParentSha == null && secondParentSha != null);
-        Contracts.requireNonNullArgument(author);
-        Contracts.requireNonNullArgument(message);
-        Contracts.requireThat(isValidAuthor(author));
-        Contracts.requireThat(isValidMessage(message));
+    public static boolean isValidAuthor(final String author) {
+        return !author.isBlank() && author.indexOf('\n') == -1;
+    }
 
-        this.treeSha = Contracts.ensureNonNullArgument(treeSha);
-        this.firstParentSha = firstParentSha;
-        this.secondParentSha = secondParentSha;
-        this.author = author;
-        this.message = message;
+    public static boolean isValidMessage(final String message) {
+        return !message.isBlank();
     }
 
     @Override
@@ -146,14 +154,6 @@ public class Commit extends GitObject {
                 .append(' ')
                 .append(sha1.getHexString())
                 .append('\n');
-    }
-
-    private static boolean isValidAuthor(final String author) {
-        return !author.isBlank();
-    }
-
-    private static boolean isValidMessage(final String message) {
-        return !message.isBlank();
     }
 
     private static String badFormat(final String additionalInfo) {

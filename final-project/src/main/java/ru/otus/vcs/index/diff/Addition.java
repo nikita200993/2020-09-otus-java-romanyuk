@@ -21,4 +21,9 @@ public class Addition extends VCSFileChange {
     public VCSPath getChangePath() {
         return addedFileDesc.getPath();
     }
+
+    @Override
+    public String toString() {
+        return "add file " + addedFileDesc.getPath().toOsPath() + " with hash " + addedFileDesc.getSha().getHexString();
+    }
 }

@@ -1,12 +1,14 @@
 package ru.otus.vcs.config;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.exception.GitException;
+import ru.otus.vcs.exception.InnerException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -18,12 +20,13 @@ public class GitConfig {
             ConfigKey.booleanConfigKey("core.filemode", "false");
     public static final ConfigKey<Integer> REPO_VER_KEY =
             ConfigKey.integerConfigKey("core.repositoryformatversion", "0");
-
+    public static final ConfigKey<String> USER = ConfigKey.stringKey("user", "Nickson");
 
     private static final Map<String, ConfigKey<?>> allowedKeysByName = Map.of(
             BARE_KEY.name, BARE_KEY,
             FILEMODE_KEY.name, FILEMODE_KEY,
-            REPO_VER_KEY.name, REPO_VER_KEY);
+            REPO_VER_KEY.name, REPO_VER_KEY,
+            USER.name, USER);
 
     private final Map<ConfigKey<?>, String> keyValues;
 
@@ -57,7 +60,7 @@ public class GitConfig {
             final String content = Files.readString(configPath);
             return createFromString(content);
         } catch (final IOException ex) {
-            throw new ConfigReadException(
+            throw new InnerException(
                     "IO error while reading config file " + configPath + ". " + ex.getMessage(),
                     ex
             );
@@ -74,16 +77,16 @@ public class GitConfig {
             }
             final String[] splitLine = line.split("=");
             if (lineIsInvalid(splitLine)) {
-                throw new ConfigReadException("Bad line '" + line + "'.");
+                throw new InnerException("Bad line '" + line + "'.");
             }
             final var key = splitLine[0].trim();
             final var value = splitLine[1].trim();
             final ConfigKey<?> configKey = allowedKeysByName.get(key);
             if (configKey == null) {
-                throw new ConfigReadException("Bad config key name '" + key + "'.");
+                throw new InnerException("Bad config key name '" + key + "'.");
             }
             if (!configKey.validator.test(value)) {
-                throw new ConfigReadException("Bad value '" + value + "' for key '" + key + "'. "
+                throw new InnerException("Bad value '" + value + "' for key '" + key + "'. "
                         + configKey.hint);
             }
             keyValues.put(configKey, value);
@@ -127,17 +130,6 @@ public class GitConfig {
             stringBuilder.append(System.lineSeparator());
         }
         return stringBuilder.toString();
-    }
-
-    public static class ConfigReadException extends GitException {
-
-        public ConfigReadException(final String message) {
-            super(message);
-        }
-
-        public ConfigReadException(String message, Throwable cause) {
-            super(message, cause);
-        }
     }
 
     public static class ConfigKey<V> {
@@ -184,6 +176,17 @@ public class GitConfig {
                     GitConfig::isBoolean,
                     "Value should be 'true' or 'false'",
                     Boolean::parseBoolean,
+                    Object::toString,
+                    defaultValue
+            );
+        }
+
+        private static ConfigKey<String> stringKey(final String name, final String defaultValue) {
+            return new ConfigKey<>(
+                    name,
+                    (str) -> true,
+                    "",
+                    Function.identity(),
                     Object::toString,
                     defaultValue
             );

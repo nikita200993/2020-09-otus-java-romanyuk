@@ -1,22 +1,23 @@
 package ru.otus.vcs.utils;
 
-import ru.otus.utils.Contracts;
-
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class Tuple2<A, B> {
     private final A a;
     private final B b;
 
-    public Tuple2(final A a, final B b) {
-        this.a = Contracts.ensureNonNullArgument(a);
-        this.b = Contracts.ensureNonNullArgument(b);
+    public Tuple2(@Nullable final A a, @Nullable final B b) {
+        this.a = a;
+        this.b = b;
     }
 
+    @Nullable
     public A first() {
         return a;
     }
 
+    @Nullable
     public B second() {
         return b;
     }
@@ -26,11 +27,19 @@ public class Tuple2<A, B> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Tuple2<?, ?> tuple2 = (Tuple2<?, ?>) o;
-        return a.equals(tuple2.a) && b.equals(tuple2.b);
+        return Objects.equals(a, tuple2.a) && Objects.equals(b, tuple2.b);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(a, b);
+    }
+
+    @Override
+    public String toString() {
+        return "Tuple2{" +
+                "a=" + a +
+                ", b=" + b +
+                '}';
     }
 }

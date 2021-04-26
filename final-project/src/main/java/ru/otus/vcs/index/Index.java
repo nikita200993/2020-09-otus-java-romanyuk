@@ -1,6 +1,11 @@
 package ru.otus.vcs.index;
 
 import ru.otus.utils.Contracts;
+import ru.otus.vcs.index.diff.Addition;
+import ru.otus.vcs.index.diff.Deletion;
+import ru.otus.vcs.index.diff.Modification;
+import ru.otus.vcs.index.diff.VCSFileChange;
+import ru.otus.vcs.path.VCSFileDesc;
 import ru.otus.vcs.path.VCSPath;
 import ru.otus.vcs.ref.Sha1;
 
@@ -104,6 +109,7 @@ public class Index {
         return max.isPresent() && max.get() > 1;
     }
 
+    @Deprecated
     public Map<VCSPath, Sha1> getPathToSha() {
         Contracts.requireThat(!hasMergeConflict());
 
@@ -115,6 +121,42 @@ public class Index {
                                 entry -> entry.getValue().get(0).getSha()
                         )
                 );
+    }
+
+    public List<VCSFileChange> getDiff(final Index other) {
+        Contracts.requireNonNullArgument(other);
+        Contracts.forbidThat(hasMergeConflict());
+        Contracts.forbidThat(other.hasMergeConflict());
+
+        final var result = new ArrayList<VCSFileChange>();
+        for (final var fileDesc : getFileDescriptors()) {
+            final var otherIndexEntries = other.pathToIndexEntries.get(fileDesc.getPath());
+            if (otherIndexEntries != null) {
+                final var otherSha = otherIndexEntries.get(0).getSha();
+                if (!otherSha.equals(fileDesc.getSha())) {
+                    result.add(new Modification(fileDesc, otherSha));
+                }
+            } else {
+                result.add(new Addition(fileDesc));
+            }
+        }
+
+        for (final var otherFileDesc : other.getFileDescriptors()) {
+            if (!pathToIndexEntries.containsKey(otherFileDesc.getPath())) {
+                result.add(new Deletion(otherFileDesc));
+            }
+        }
+        return result;
+    }
+
+    public Set<VCSFileDesc> getFileDescriptors() {
+        Contracts.forbidThat(hasMergeConflict());
+
+        return pathToIndexEntries.values()
+                .stream()
+                .flatMap(List::stream)
+                .map(indexEntry -> new VCSFileDesc(indexEntry.getPath(), indexEntry.getSha()))
+                .collect(toSet());
     }
 
     public Map<VCSPath, List<IndexEntry>> getPathToIndexEntries() {

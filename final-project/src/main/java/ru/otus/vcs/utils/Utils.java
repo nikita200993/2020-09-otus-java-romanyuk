@@ -7,6 +7,7 @@ import ru.otus.vcs.exception.UserException;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -110,41 +111,32 @@ public class Utils {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    @Nullable
-    public static Path toRealPath(final Path path) {
+
+    public static boolean isEmptyDir(final Path path) {
         Contracts.requireNonNullArgument(path);
 
         try {
-            if (Files.exists(path)) {
-                return path.toRealPath(LinkOption.NOFOLLOW_LINKS);
-            } else {
-                return null;
-            }
+            return Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS) && Files.list(path).count() == 0;
         } catch (final IOException ex) {
-            throw new InnerException("Can't transform to real path = " + path, ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
-    public static Path convertUserProvidedStringToPath(final String stringPath) {
-        Contracts.requireNonNullArgument(stringPath);
+    public static Path toReal(final Path path) {
+        try {
+            return path.toRealPath(LinkOption.NOFOLLOW_LINKS);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    public static byte[] readBytes(final Path path) {
+        Contracts.requireNonNullArgument(path);
 
         try {
-            return Path.of(stringPath);
-        } catch (final InvalidPathException ex) {
-            throw new UserException("Provided by user path = " + stringPath + " has bad syntax.", ex);
+            return Files.readAllBytes(path);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Can't read " + path + ".", ex);
         }
-    }
-
-    public static <K, V, U> Map<K, U> mapValuesToImmutableMap(
-            final Map<K, V> mapToTransform,
-            final Function<? super V, ? extends U> mapper) {
-        Contracts.requireNonNullArgument(mapToTransform);
-        Contracts.requireNonNullArgument(mapper);
-
-        return Map.copyOf(
-                mapToTransform.entrySet()
-                        .stream()
-                        .collect(toMap(Map.Entry::getKey, entry -> mapper.apply(entry.getValue())))
-        );
     }
 }

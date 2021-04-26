@@ -27,4 +27,11 @@ public class Modification extends VCSFileChange {
     public Sha1 getOriginalSha() {
         return originalSha;
     }
+
+    @Override
+    public String toString() {
+        return "modified file " + modifiedFileDesc.getPath().toOsPath()
+                + " new hash " + modifiedFileDesc.getSha().getHexString()
+                + " previous hash " + originalSha.getHexString();
+    }
 }

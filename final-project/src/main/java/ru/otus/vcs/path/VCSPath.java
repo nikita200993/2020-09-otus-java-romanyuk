@@ -1,7 +1,7 @@
 package ru.otus.vcs.path;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.repository.GitRepository;
+import ru.otus.vcs.newversion.gitrepo.GitRepository;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 public class VCSPath {
 
@@ -36,7 +36,7 @@ public class VCSPath {
         return new VCSPath(
                 Arrays.stream(path.split(separator))
                         .map(VCSFileName::create)
-                        .collect(toList())
+                        .collect(Collectors.toUnmodifiableList())
         );
     }
 
@@ -53,24 +53,18 @@ public class VCSPath {
         if (split.length == 0) {
             return false;
         }
-        if (path.startsWith(GitRepository.GITDIR)) {
+        if (split[0].equals(GitRepository.DIR_NAME)) {
             return false;
         }
         return Arrays.stream(split)
                 .allMatch(VCSFileName::isValidVCSFileName);
     }
 
-//    TODO: test "/afd"
+    //    TODO: test "/afd"
     public static boolean isValidVCSPath(final Path path) {
         Contracts.requireNonNull(path);
 
         return isValidVCSPathString(path.toString().replace(File.separator, separator));
-    }
-
-    public VCSFileName getName(final int index) {
-        Contracts.requireThat(index >= 0 && index < path.size());
-
-        return path.get(index);
     }
 
     public boolean isRoot() {

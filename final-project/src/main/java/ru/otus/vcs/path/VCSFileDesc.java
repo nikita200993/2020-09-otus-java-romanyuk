@@ -6,6 +6,7 @@ import ru.otus.vcs.ref.Sha1;
 import java.util.Objects;
 
 public class VCSFileDesc {
+
     private final VCSPath path;
     private final Sha1 sha;
 
@@ -16,6 +17,14 @@ public class VCSFileDesc {
 
         this.path = path;
         this.sha = sha;
+    }
+
+    public VCSPath getPath() {
+        return path;
+    }
+
+    public Sha1 getSha() {
+        return sha;
     }
 
     @Override
