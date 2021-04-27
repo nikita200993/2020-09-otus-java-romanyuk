@@ -152,4 +152,16 @@ public class Utils {
             throw new UncheckedIOException("Can't delete path " + path + ".", ex);
         }
     }
+
+    public static boolean isRegularFileNoFollow(final Path path) {
+        Contracts.requireNonNullArgument(path);
+
+        return Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS);
+    }
+
+    public static boolean isDirectoryNoFollow(final Path path) {
+        Contracts.requireNonNullArgument(path);
+
+        return Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS);
+    }
 }
