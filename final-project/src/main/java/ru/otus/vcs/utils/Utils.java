@@ -132,6 +132,27 @@ public class Utils {
         }
     }
 
+    public static String readUtf8(final Path path) {
+        Contracts.requireNonNullArgument(path);
+
+        try {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Can't read " + path + ".", ex);
+        }
+    }
+
+    public static void writeUtf8(final Path path, final String content) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.requireNonNullArgument(path);
+
+        try {
+            Files.writeString(path, content, StandardCharsets.UTF_8);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Can't read " + path + ".", ex);
+        }
+    }
+
     public static void writeBytes(final Path path, final byte[] bytes) {
         Contracts.requireNonNullArgument(path);
         Contracts.requireNonNullArgument(bytes);
