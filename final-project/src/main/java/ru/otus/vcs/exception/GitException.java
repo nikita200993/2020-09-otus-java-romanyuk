@@ -19,9 +19,11 @@ public class GitException extends RuntimeException {
                 .append(System.lineSeparator());
         Throwable currentEx = this.getCause();
         while (currentEx instanceof GitException) {
-            builder.append("Reason: ")
-                    .append(currentEx.getMessage())
-                    .append(System.lineSeparator());
+            if (!currentEx.getMessage().isBlank()) {
+                builder.append("Reason: ")
+                        .append(currentEx.getMessage())
+                        .append(System.lineSeparator());
+            }
             currentEx = currentEx.getCause();
         }
         builder.deleteCharAt(builder.length() - 1);
