@@ -4,6 +4,8 @@ import ru.otus.utils.Contracts;
 import ru.otus.vcs.path.VCSFileDesc;
 import ru.otus.vcs.path.VCSPath;
 
+import java.util.Objects;
+
 public class Addition extends VCSFileChange {
 
     private final VCSFileDesc addedFileDesc;
@@ -25,5 +27,18 @@ public class Addition extends VCSFileChange {
     @Override
     public String toString() {
         return "add file " + addedFileDesc.getPath().toOsPath() + " with hash " + addedFileDesc.getSha().getHexString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Addition addition = (Addition) o;
+        return addedFileDesc.equals(addition.addedFileDesc);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(addedFileDesc);
     }
 }

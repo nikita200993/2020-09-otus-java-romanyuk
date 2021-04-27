@@ -5,6 +5,8 @@ import ru.otus.vcs.path.VCSFileDesc;
 import ru.otus.vcs.path.VCSPath;
 import ru.otus.vcs.ref.Sha1;
 
+import java.util.Objects;
+
 public class Modification extends VCSFileChange {
     private final VCSFileDesc modifiedFileDesc;
 
@@ -33,5 +35,18 @@ public class Modification extends VCSFileChange {
         return "modified file " + modifiedFileDesc.getPath().toOsPath()
                 + " new hash " + modifiedFileDesc.getSha().getHexString()
                 + " previous hash " + originalSha.getHexString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Modification that = (Modification) o;
+        return modifiedFileDesc.equals(that.modifiedFileDesc) && originalSha.equals(that.originalSha);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(modifiedFileDesc, originalSha);
     }
 }
