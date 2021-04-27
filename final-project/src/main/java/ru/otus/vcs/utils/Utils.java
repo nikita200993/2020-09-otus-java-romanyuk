@@ -1,29 +1,21 @@
 package ru.otus.vcs.utils;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.exception.InnerException;
-import ru.otus.vcs.exception.UserException;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
-
-import static java.util.stream.Collectors.toMap;
 
 public class Utils {
 
@@ -137,6 +129,27 @@ public class Utils {
             return Files.readAllBytes(path);
         } catch (final IOException ex) {
             throw new UncheckedIOException("Can't read " + path + ".", ex);
+        }
+    }
+
+    public static void writeBytes(final Path path, final byte[] bytes) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.requireNonNullArgument(bytes);
+
+        try {
+            Files.write(path, bytes);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Can't read " + path + ".", ex);
+        }
+    }
+
+    public static void delete(final Path path) {
+        Contracts.requireNonNullArgument(path);
+
+        try {
+            Files.delete(path);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Can't delete path " + path + ".", ex);
         }
     }
 }
