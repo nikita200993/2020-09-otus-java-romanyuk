@@ -8,9 +8,15 @@ import ru.otus.vcs.index.diff.VCSFileChange;
 import ru.otus.vcs.path.VCSFileDesc;
 import ru.otus.vcs.path.VCSPath;
 import ru.otus.vcs.ref.Sha1;
+import ru.otus.vcs.utils.Utils;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
@@ -57,6 +64,27 @@ public class Index {
         Contracts.requireNonNullArgument(indexEntries);
 
         return new Index(indexEntriesToMap(indexEntries));
+    }
+
+    public static Index create(final Path path, final Function<byte[], Sha1> hasher) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.requireNonNullArgument(hasher);
+
+        final var realPath = Utils.toReal(path);
+        try (var fileWalk = Files.walk(realPath)) {
+            final var indexEntries = fileWalk.skip(1)
+                    .filter(innerPath -> Files.isRegularFile(innerPath, LinkOption.NOFOLLOW_LINKS))
+                    .filter(innerPath -> VCSPath.isValidVCSPath(realPath.relativize(innerPath)))
+                    .map(
+                            innerPath -> IndexEntry.newNormalEntry(
+                                    VCSPath.create(realPath.relativize(innerPath)),
+                                    hasher.apply(Utils.readBytes(innerPath))
+                            )
+                    ).collect(Collectors.toList());
+            return Index.create(indexEntries);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     public Index withNewIndexEntry(final VCSPath path, final Sha1 sha) {
