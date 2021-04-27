@@ -2,11 +2,20 @@ package ru.otus.vcs.index;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import ru.otus.vcs.index.diff.Addition;
+import ru.otus.vcs.index.diff.Deletion;
+import ru.otus.vcs.index.diff.Modification;
+import ru.otus.vcs.path.VCSFileDesc;
 import ru.otus.vcs.path.VCSPath;
 import ru.otus.vcs.ref.Sha1;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 public class IndexTest {
 
@@ -163,6 +172,53 @@ public class IndexTest {
                         )
                 ).withRemovedIndexEntry(path1)
         ).returns(true, Index::isEmpty);
+    }
+
+    @Test
+    void testCreateIndexFromPath(@TempDir final Path temp) throws IOException {
+        Files.createSymbolicLink(temp.resolve("sym"), temp);
+        Files.createDirectory(temp.resolve("dir1"));
+        Files.createDirectory(temp.resolve("dir2"));
+        Files.writeString(temp.resolve("file1"), "a");
+        Files.writeString(temp.resolve("dir2").resolve("file2"), "b");
+        final var index = Index.create(temp, Sha1::hash);
+        final var expectedFileDescriptors = Set.of(
+                new VCSFileDesc(VCSPath.create("file1"), Sha1.hash("a".getBytes())),
+                new VCSFileDesc(VCSPath.create("dir2/file2"), Sha1.hash("b"))
+        );
+        Assertions.assertThat(index.getFileDescriptors())
+                .isEqualTo(expectedFileDescriptors);
+    }
+
+    @Test
+    void testDiff() {
+        final VCSPath added = VCSPath.create("added");
+        final Sha1 addedHash = Sha1.hash("added");
+        final VCSPath modified = VCSPath.create("modified");
+        final Sha1 modifiedNew = Sha1.hash("new");
+        final Sha1 modifiedOld = Sha1.hash("old");
+        final VCSPath removed = VCSPath.create("removed");
+        final Sha1 removedSha = Sha1.hash("removed");
+        final var indexOne = Index.create(
+                List.of(
+                        IndexEntry.newNormalEntry(added, addedHash),
+                        IndexEntry.newNormalEntry(modified, modifiedNew)
+                )
+        );
+        final var indexTwo = Index.create(
+                List.of(
+                        IndexEntry.newNormalEntry(removed, removedSha),
+                        IndexEntry.newNormalEntry(modified, modifiedOld)
+                )
+        );
+        Assertions.assertThat(indexOne.getDiff(indexTwo))
+                .containsExactlyInAnyOrderElementsOf(
+                        List.of(
+                                new Addition(new VCSFileDesc(added, addedHash)),
+                                new Deletion(new VCSFileDesc(removed, removedSha)),
+                                new Modification(new VCSFileDesc(modified, modifiedNew), modifiedOld)
+                        )
+                );
     }
 
     private static String createLineOfIndexEntryFormat(final int code, final VCSPath path, final String salt) {
