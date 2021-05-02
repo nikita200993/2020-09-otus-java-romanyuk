@@ -110,7 +110,10 @@ class NestedGitLocalRepositoryTest {
         Files.writeString(pathToRemove, "abc");
         final var vcsPath = VCSPath.create("a");
         final var hash = Sha1.hash("a");
-        when(mockGitRepo.hashOfStagedPath(vcsPath)).thenReturn(hash);
+        final var index = Index.create(
+                List.of(IndexEntry.newNormalEntry(vcsPath, hash))
+        );
+        when(mockGitRepo.getIndex()).thenReturn(index);
         when(mockGitRepo.hash(any())).thenReturn(hash);
         localRepository.remove(vcsPath);
         Assertions.assertThat(pathToRemove)
@@ -123,7 +126,10 @@ class NestedGitLocalRepositoryTest {
         Files.writeString(pathToRemove, "abc");
         final var vcsPath = VCSPath.create("a");
         final var hash = Sha1.hash("a");
-        when(mockGitRepo.hashOfStagedPath(vcsPath)).thenReturn(hash);
+        final var index = Index.create(
+                List.of(IndexEntry.newNormalEntry(vcsPath, hash))
+        );
+        when(mockGitRepo.getIndex()).thenReturn(index);
         when(mockGitRepo.hash(any())).thenReturn(Sha1.hash("b"));
         Assertions.assertThatThrownBy(
                 () -> localRepository.remove(vcsPath)
@@ -137,7 +143,8 @@ class NestedGitLocalRepositoryTest {
         final Path pathToRemove = temp.resolve("a");
         Files.writeString(pathToRemove, "abc");
         final var vcsPath = VCSPath.create("a");
-        when(mockGitRepo.hashOfStagedPath(vcsPath)).thenReturn(null);
+        final var index = Index.create(Collections.emptyList());
+        when(mockGitRepo.getIndex()).thenReturn(index);
         Assertions.assertThatThrownBy(
                 () -> localRepository.remove(vcsPath)
         ).isInstanceOf(LocalRepositoryException.class);
@@ -148,7 +155,10 @@ class NestedGitLocalRepositoryTest {
     @Test
     void removeAbsentInLocalFsButPresentInIndex() {
         final var vcsPath = VCSPath.create("a");
-        when(mockGitRepo.hashOfStagedPath(vcsPath)).thenReturn(Sha1.hash("a"));
+        final var index = Index.create(
+                List.of(IndexEntry.newNormalEntry(vcsPath, Sha1.hash("a")))
+        );
+        when(mockGitRepo.getIndex()).thenReturn(index);
         localRepository.remove(vcsPath);
     }
 
@@ -158,8 +168,7 @@ class NestedGitLocalRepositoryTest {
         final Path pathToRemove = temp.resolve("a");
         Files.writeString(pathToRemove, "abc");
         final var vcsPath = VCSPath.create("a");
-        final var hash = Sha1.hash("a");
-        when(mockGitRepo.remove(vcsPath)).thenReturn(hash);
+        when(mockGitRepo.remove(vcsPath)).thenReturn(true);
         localRepository.removeFromIndex(vcsPath);
         Assertions.assertThat(pathToRemove)
                 .exists();
@@ -168,7 +177,7 @@ class NestedGitLocalRepositoryTest {
     @Test
     void removeFromIndexFailsIfNotInIndex() {
         final var vcsPath = VCSPath.create("a");
-        when(mockGitRepo.remove(vcsPath)).thenReturn(null);
+        when(mockGitRepo.remove(vcsPath)).thenReturn(false);
         Assertions.assertThatThrownBy(
                 () -> localRepository.removeFromIndex(vcsPath)
         ).isInstanceOf(LocalRepositoryException.class);
@@ -178,7 +187,7 @@ class NestedGitLocalRepositoryTest {
     void removeForciblyAbsentInFsAndPresentInIndex() {
         final Path pathToRemove = temp.resolve("a");
         final var vcsPath = VCSPath.create("a");
-        when(mockGitRepo.remove(vcsPath)).thenReturn(Sha1.hash("a"));
+        when(mockGitRepo.remove(vcsPath)).thenReturn(true);
         localRepository.removeForcibly(vcsPath);
     }
 
@@ -187,7 +196,7 @@ class NestedGitLocalRepositoryTest {
         final Path pathToRemove = temp.resolve("a");
         Files.writeString(pathToRemove, "abc");
         final var vcsPath = VCSPath.create("a");
-        when(mockGitRepo.remove(vcsPath)).thenReturn(Sha1.hash("a"));
+        when(mockGitRepo.remove(vcsPath)).thenReturn(true);
         localRepository.removeForcibly(vcsPath);
         Assertions.assertThat(pathToRemove)
                 .doesNotExist();
