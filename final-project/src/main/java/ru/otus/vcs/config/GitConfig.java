@@ -185,7 +185,7 @@ public class GitConfig {
             return new ConfigKey<>(
                     name,
                     (str) -> true,
-                    "",
+                    "no hint",
                     Function.identity(),
                     Object::toString,
                     defaultValue
