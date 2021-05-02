@@ -20,7 +20,7 @@ public abstract class Ref {
         Contracts.requireNonNullArgument(refString);
         Contracts.requireThat(isValidRefString(refString));
 
-        if (Sha1.isValidRefString(refString)) {
+        if (Sha1.isValidSha1HexString(refString)) {
             return Sha1.create(refString);
         } else if (BranchName.isValidBranchName(refString)) {
             return BranchName.create(refString);
