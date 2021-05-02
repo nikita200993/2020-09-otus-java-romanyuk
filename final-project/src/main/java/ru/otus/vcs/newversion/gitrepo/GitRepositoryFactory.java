@@ -3,7 +3,7 @@ package ru.otus.vcs.newversion.gitrepo;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 
-public interface GitRepoFactory {
+public interface GitRepositoryFactory {
 
     /**
      * Null if can't find repo.
