@@ -2,6 +2,7 @@ package ru.otus.vcs.objects;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.otus.vcs.newversion.gitrepo.CommitMessage;
 import ru.otus.vcs.path.VCSFileName;
 import ru.otus.vcs.ref.Sha1;
 
@@ -47,7 +48,7 @@ public class SerializationTest {
 
     @Test
     void testCommitSerialization() {
-        final var commit = new Commit(Sha1.hash("a"), Sha1.hash("b"), null, "adsa", "fasdf");
+        final var commit = new Commit(Sha1.hash("a"), Sha1.hash("b"), null, "adsa", CommitMessage.create("fasdf"));
 
         Assertions.assertThat(GitObject.deserialize(commit.serialize()))
                 .isEqualTo(commit);
