@@ -43,7 +43,7 @@ public class Index {
 
     private final LinkedHashMap<VCSPath, List<IndexEntry>> pathToIndexEntries;
 
-    private Index(LinkedHashMap<VCSPath, List<IndexEntry>> pathToIndexEntries) {
+    private Index(final LinkedHashMap<VCSPath, List<IndexEntry>> pathToIndexEntries) {
         this.pathToIndexEntries = pathToIndexEntries;
     }
 
@@ -116,6 +116,44 @@ public class Index {
             newMapping.remove(path);
             return new Index(newMapping);
         }
+    }
+
+    public Index withDroppedConflicts() {
+        return create(
+                pathToIndexEntries.values()
+                        .stream()
+                        .filter(list -> list.size() == 1)
+                        .map(list -> list.get(0))
+                        .collect(Collectors.toList())
+        );
+    }
+
+    @Nullable
+    public Sha1 hashOfPath(final VCSPath path) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.forbidThat(path.isRoot());
+
+        final var entries = pathToIndexEntries.get(path);
+        if (entries == null) {
+            return null;
+        }
+        Contracts.forbidThat(entries.size() > 1);
+        return entries.get(0).getSha();
+    }
+
+    public boolean contains(final VCSPath path) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.forbidThat(path.isRoot());
+
+        return pathToIndexEntries.containsKey(path);
+    }
+
+    public boolean inConflict(final VCSPath path) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.forbidThat(path.isRoot());
+
+        final var entries = pathToIndexEntries.get(path);
+        return entries != null && entries.size() > 1;
     }
 
     public boolean isEmpty() {
@@ -198,6 +236,16 @@ public class Index {
                 .collect(toSet());
     }
 
+    public List<Modification> getMergeConflicts() {
+        final List<Modification> modifications = new ArrayList<>();
+        for (final var indexEntries : pathToIndexEntries.values()) {
+            if (indexEntries.size() > 1) {
+                modifications.add(modificationFromConflictingEntries(indexEntries));
+            }
+        }
+        return modifications;
+    }
+
     private static LinkedHashMap<VCSPath, List<IndexEntry>> indexEntriesToMap(final List<IndexEntry> entries) {
         final Map<VCSPath, Set<Sha1>> pathToSha = new HashMap<>();
         final Map<VCSPath, Set<Stage>> pathToInteger = new HashMap<>();
@@ -259,6 +307,25 @@ public class Index {
         } else {
             return false;
         }
+    }
+
+    private static Modification modificationFromConflictingEntries(final List<IndexEntry> indexEntries) {
+        Contracts.requireThat(indexEntries.size() > 1);
+        final var vcsPath = indexEntries.get(0).getPath();
+        Sha1 receiverSha = null;
+        Sha1 giverSha = null;
+        for (final IndexEntry indexEntry : indexEntries) {
+            if (indexEntry.getStage() == Stage.receiver) {
+                Contracts.requireThat(receiverSha == null);
+                receiverSha = indexEntry.getSha();
+            } else if (indexEntry.getStage() == Stage.giver) {
+                Contracts.requireThat(giverSha == null);
+                giverSha = indexEntry.getSha();
+            }
+        }
+        Contracts.requireNonNull(receiverSha);
+        Contracts.requireNonNull(giverSha);
+        return new Modification(new VCSFileDesc(vcsPath, giverSha), receiverSha);
     }
 
     @Override
