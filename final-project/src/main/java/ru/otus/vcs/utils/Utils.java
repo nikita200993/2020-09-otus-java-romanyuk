@@ -6,9 +6,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -109,6 +111,18 @@ public class Utils {
 
         try {
             return Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS) && Files.list(path).count() == 0;
+        } catch (final IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    public static boolean createDir(final Path path) {
+        Contracts.requireNonNullArgument(path);
+        try {
+            Files.createDirectory(path);
+            return true;
+        } catch (final FileAlreadyExistsException ex) {
+            return false;
         } catch (final IOException ex) {
             throw new UncheckedIOException(ex);
         }
