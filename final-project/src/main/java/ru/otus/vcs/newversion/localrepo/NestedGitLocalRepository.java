@@ -61,7 +61,7 @@ public class NestedGitLocalRepository implements LocalRepository {
     }
 
     @Override
-    public boolean add(final VCSPath path) {
+    public void add(final VCSPath path) {
         Contracts.requireNonNullArgument(path);
         Contracts.forbidThat(path.isRoot());
 
@@ -70,7 +70,7 @@ public class NestedGitLocalRepository implements LocalRepository {
             throw new LocalRepositoryException("Can't add file at path " + osPath + ". File must exist and be regular.");
         }
         final var content = Utils.readBytes(osPath);
-        return gitRepo.add(content, path);
+        gitRepo.add(content, path);
     }
 
     @Override
@@ -78,8 +78,8 @@ public class NestedGitLocalRepository implements LocalRepository {
         Contracts.requireNonNullArgument(path);
         Contracts.forbidThat(path.isRoot());
 
-        final var stagedHash = gitRepo.hashOfStagedPath(path);
-        if (stagedHash == null) {
+        final var index = gitRepo.getIndex();
+        if (!index.contains(path)) {
             throw new LocalRepositoryException("Can't remove " + path + ". It is not in the index.");
         }
         final var osPath = repoPath.resolve(path.toOsPath());
@@ -87,8 +87,14 @@ public class NestedGitLocalRepository implements LocalRepository {
             gitRepo.remove(path);
             return;
         }
+        if (index.inConflict(path)) {
+            Utils.delete(osPath);
+            gitRepo.remove(path);
+            return;
+        }
         final var currentContent = Utils.readBytes(osPath);
         final var currentHash = gitRepo.hash(currentContent);
+        final var stagedHash = index.hashOfPath(path);
         if (currentHash.equals(stagedHash)) {
             Utils.delete(osPath);
             gitRepo.remove(path);
@@ -104,7 +110,7 @@ public class NestedGitLocalRepository implements LocalRepository {
         Contracts.requireNonNullArgument(path);
         Contracts.forbidThat(path.isRoot());
 
-        if (gitRepo.remove(path) == null) {
+        if (!gitRepo.remove(path)) {
             throw new LocalRepositoryException("Can't delete path from index" +
                     path.toOsPath() + ". It doesn't exist in index."
             );

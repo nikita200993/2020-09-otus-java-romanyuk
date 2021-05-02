@@ -12,7 +12,7 @@ public interface LocalRepository {
 
     void checkThatIsRepositoryPath(Path absolutePath) throws LocalRepositoryException;
 
-    boolean add(VCSPath path);
+    void add(VCSPath path);
 
     void remove(VCSPath path);
 
