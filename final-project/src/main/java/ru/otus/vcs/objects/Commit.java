@@ -1,6 +1,7 @@
 package ru.otus.vcs.objects;
 
 import ru.otus.utils.Contracts;
+import ru.otus.vcs.newversion.gitrepo.CommitMessage;
 import ru.otus.vcs.ref.Sha1;
 
 import javax.annotation.Nullable;
@@ -23,20 +24,19 @@ public class Commit extends GitObject {
     @Nullable
     private final Sha1 secondParentSha;
     private final String author;
-    private final String message;
+    private final CommitMessage message;
 
     public Commit(
             final Sha1 treeSha,
             @Nullable final Sha1 firstParentSha,
             @Nullable final Sha1 secondParentSha,
             final String author,
-            final String message) {
+            final CommitMessage message) {
         Contracts.requireNonNullArgument(treeSha);
         Contracts.forbidThat(firstParentSha == null && secondParentSha != null);
         Contracts.requireNonNullArgument(author);
         Contracts.requireNonNullArgument(message);
         Contracts.requireThat(isValidAuthor(author));
-        Contracts.requireThat(isValidMessage(message));
 
         this.treeSha = Contracts.ensureNonNullArgument(treeSha);
         this.firstParentSha = firstParentSha;
@@ -100,7 +100,8 @@ public class Commit extends GitObject {
         Contracts.requireNonNull(tree, badFormat("There was no tree info."));
         Contracts.requireThat(parents.size() <= 2, badFormat("More than two parents."));
         Contracts.requireNonNull(author, badFormat("There was no author info."));
-        Contracts.requireThat(isValidMessage(message), "Message is invalid.");
+        Contracts.requireThat(CommitMessage.isValidMessage(message), "Message is invalid.");
+        final CommitMessage commitMessage = CommitMessage.create(message);
         final Sha1 firstParent;
         final Sha1 secondParent;
         if (parents.size() == 0) {
@@ -113,15 +114,11 @@ public class Commit extends GitObject {
             firstParent = parents.get(0);
             secondParent = parents.get(1);
         }
-        return new Commit(tree, firstParent, secondParent, author, message);
+        return new Commit(tree, firstParent, secondParent, author, commitMessage);
     }
 
     public static boolean isValidAuthor(final String author) {
         return !author.isBlank() && author.indexOf('\n') == -1;
-    }
-
-    public static boolean isValidMessage(final String message) {
-        return !message.isBlank();
     }
 
     @Override
@@ -140,7 +137,7 @@ public class Commit extends GitObject {
                 .append(author)
                 .append('\n')
                 .append('\n')
-                .append(message)
+                .append(message.getMessage())
                 .append('\n');
         return strBuilder.toString()
                 .getBytes(StandardCharsets.UTF_8);
@@ -185,7 +182,6 @@ public class Commit extends GitObject {
     public boolean isLinearCommit() {
         return firstParentSha != null && secondParentSha == null;
     }
-
 
     @Override
     public boolean equals(Object o) {
