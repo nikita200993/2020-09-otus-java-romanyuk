@@ -77,10 +77,12 @@ public class Utils {
         if (byteArrays.size() == 1) {
             return result;
         }
-        var arrayToConcat = byteArrays.get(1);
         int start = byteArrays.get(0).length;
         for (int i = 1; i < byteArrays.size(); i++) {
+            final var arrayToConcat = byteArrays.get(i);
             System.arraycopy(arrayToConcat, 0, result, start, arrayToConcat.length);
+            start = start + arrayToConcat.length;
+
         }
         return result;
     }

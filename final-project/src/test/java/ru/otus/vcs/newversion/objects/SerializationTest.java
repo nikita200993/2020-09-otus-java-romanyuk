@@ -30,7 +30,7 @@ public class SerializationTest {
     }
 
     @Test
-    void testTreeSerialization() {
+    void testTreeSerialization1() {
         final var first = new TreeLeaf(
                 FileType.Directory,
                 VCSFileName.create("abc"),
@@ -42,6 +42,28 @@ public class SerializationTest {
                 Sha1.hash("a")
         );
         final var tree = new Tree(List.of(first, second));
+        Assertions.assertThat(GitObject.deserialize(tree.serialize()))
+                .isEqualTo(tree);
+    }
+
+    @Test
+    void testTreeSerialization2() {
+        final var first = new TreeLeaf(
+                FileType.Directory,
+                VCSFileName.create("abc"),
+                Sha1.hash("b")
+        );
+        final var second = new TreeLeaf(
+                FileType.Regular,
+                VCSFileName.create("zz"),
+                Sha1.hash("a")
+        );
+        final var third = new TreeLeaf(
+                FileType.Regular,
+                VCSFileName.create("zzf"),
+                Sha1.hash("add")
+        );
+        final var tree = new Tree(List.of(first, second, third));
         Assertions.assertThat(GitObject.deserialize(tree.serialize()))
                 .isEqualTo(tree);
     }

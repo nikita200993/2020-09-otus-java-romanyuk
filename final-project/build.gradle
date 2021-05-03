@@ -1,5 +1,6 @@
 plugins {
     id "java"
+    id 'com.github.johnrengelman.shadow'
 }
 
 compileJava {
@@ -23,6 +24,15 @@ dependencies {
 test {
     useJUnitPlatform()
     testLogging {
-        events "passed", "skipped", "failed"
+        events "failed"
+    }
+}
+
+shadowJar {
+    archiveBaseName.set('simplegit')
+    archiveVersion.set('0.1')
+    archiveClassifier.set('')
+    manifest {
+        attributes 'Main-Class': 'ru.otus.vcs.newversion.Main'
     }
 }

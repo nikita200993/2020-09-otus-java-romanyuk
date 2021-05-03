@@ -8,6 +8,7 @@ import ru.otus.vcs.newversion.cli.Checkout;
 import ru.otus.vcs.newversion.cli.Commit;
 import ru.otus.vcs.newversion.cli.Init;
 import ru.otus.vcs.newversion.cli.Remove;
+import ru.otus.vcs.newversion.cli.Status;
 
 public class Main {
 
@@ -15,7 +16,7 @@ public class Main {
         final var gitCLi = Cli.<Runnable>builder("simplegit")
                 .withDescription("version control system")
                 .withDefaultCommand(Help.class)
-                .withCommands(Init.class, Add.class, Remove.class, Branch.class, Checkout.class, Commit.class)
+                .withCommands(Init.class, Add.class, Remove.class, Branch.class, Checkout.class, Commit.class, Status.class)
                 .build();
         gitCLi.parse(args).run();
     }

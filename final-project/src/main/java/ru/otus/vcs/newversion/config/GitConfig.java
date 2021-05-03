@@ -76,7 +76,7 @@ public class GitConfig {
                 continue;
             }
             final String[] splitLine = line.split("=");
-            Contracts.requireThat(lineIsInvalid(splitLine), "Bad line '" + line + "'.");
+            Contracts.forbidThat(lineIsInvalid(splitLine), "Bad line '" + line + "'.");
             final var key = splitLine[0].trim();
             final var value = splitLine[1].trim();
             final ConfigKey<?> configKey = Contracts.ensureNonNull(

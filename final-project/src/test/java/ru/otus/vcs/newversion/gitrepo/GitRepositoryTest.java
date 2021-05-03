@@ -147,38 +147,6 @@ public class GitRepositoryTest {
     }
 
     @Test
-    void testCheckoutChangesReservedCase() {
-        add("a", "a");
-        add("b", "b");
-        commit("master first");
-        assertThatThrownBy(
-                () -> checkoutChanges("HEAD")
-        ).isInstanceOf(GitRepositoryException.class);
-    }
-
-    @Test
-    void testCheckoutChangesSameCommitCase1() {
-        add("a", "a");
-        add("b", "b");
-        commit("master first");
-        assertThatThrownBy(
-                () -> checkoutChanges(gitRepository.readCommitOrNull(ReservedRef.head).sha1().getHexString())
-        ).isInstanceOf(GitRepositoryException.class)
-                .hasMessageContaining("same");
-    }
-
-    @Test
-    void testCheckoutChangesSameCommitCase2() {
-        add("a", "a");
-        add("b", "b");
-        commit("master first");
-        assertThatThrownBy(
-                () -> checkoutChanges("master")
-        ).isInstanceOf(GitRepositoryException.class)
-                .hasMessageContaining("same");
-    }
-
-    @Test
     void testCheckout1() {
         add("a", "a");
         add("b", "b");

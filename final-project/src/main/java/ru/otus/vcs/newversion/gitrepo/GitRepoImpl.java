@@ -1,5 +1,7 @@
 package ru.otus.vcs.newversion.gitrepo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.otus.utils.Contracts;
 import ru.otus.vcs.newversion.config.GitConfig;
 import ru.otus.vcs.newversion.index.Index;
@@ -26,6 +28,8 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 
 public class GitRepoImpl implements GitRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(GitRepoImpl.class);
 
     private final Path repoRoot;
     private final GitConfig config;
@@ -178,7 +182,6 @@ public class GitRepoImpl implements GitRepository {
         final var staged = getIndex();
         checkNoChangesWithHead(staged, () -> new GitRepositoryException("There are uncommitted changes"));
         final Commit checkoutCommit = readCommitForUserProvidedRef(ref);
-        checkIsNotTheSameAsHead(checkoutCommit, () -> new GitRepositoryException("Trying to checkout the same commit as head."));
         final var checkoutIndex = indexFromTreeRef(checkoutCommit.getTreeSha());
         return checkoutIndex.getDiff(staged);
     }
@@ -194,7 +197,6 @@ public class GitRepoImpl implements GitRepository {
                 () -> new IllegalStateException("Can't call checkout with uncommitted changes")
         );
         final Commit checkoutCommit = Contracts.ensureNonNull(readCommitOrNull(ref));
-        checkIsNotTheSameAsHead(checkoutCommit, () -> new IllegalStateException("Trying to checkout the same commit as head."));
         saveIndex(indexFromTreeRef(checkoutCommit.getTreeSha()));
         updateHeadForCheckout(ref, checkoutCommit.sha1());
     }
@@ -273,6 +275,7 @@ public class GitRepoImpl implements GitRepository {
 
     @Nullable
     private Tree readTreeOrNull(final Sha1 sha1) {
+
         final var gitObject = readGitObjectOrNull(sha1);
         if (gitObject == null) {
             return null;
@@ -441,6 +444,7 @@ public class GitRepoImpl implements GitRepository {
     }
 
     private Index indexFromTreeRef(final Sha1 sha1) {
+        logger.info("Reading tree with sha " + sha1.getHexString());
         return Contracts.ensureNonNull(readTreeOrNull(sha1))
                 .index((sha) -> Contracts.ensureNonNull(readTreeOrNull(sha)));
     }
@@ -485,13 +489,6 @@ public class GitRepoImpl implements GitRepository {
 
     private void checkMergeNotInProgress(final Supplier<? extends RuntimeException> exc) {
         if (mergeInProgress()) {
-            throw exc.get();
-        }
-    }
-
-    private void checkIsNotTheSameAsHead(final Commit checkoutCommit, final Supplier<? extends RuntimeException> exc) {
-        final var headCommit = readCommitOrNull(ReservedRef.head);
-        if (headCommit != null && headCommit.sha1().equals(checkoutCommit.sha1())) {
             throw exc.get();
         }
     }
