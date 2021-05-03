@@ -2,8 +2,7 @@ package ru.otus.vcs.cli;
 
 import io.airlift.airline.Arguments;
 import io.airlift.airline.Command;
-import ru.otus.vcs.exception.UserException;
-import ru.otus.vcs.processor.CommandProcessor;
+import ru.otus.vcs.newversion.exception.UserException;
 
 import javax.annotation.Nullable;
 import java.nio.file.InvalidPathException;
@@ -20,7 +19,7 @@ public class GitInit extends GitCommand {
     public void run() {
         try {
             final var path = Path.of(stringPath  == null ? "" : stringPath);
-            new CommandProcessor().init(path);
+            throw new UnsupportedOperationException();
         } catch (final InvalidPathException ex) {
             throw new UserException("Bad path '" + stringPath + "'.");
         }
