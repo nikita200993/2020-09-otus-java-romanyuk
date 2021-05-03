@@ -29,14 +29,6 @@ class LocalConflict {
         return new LocalConflict(Reason.LOCAL_FILE_CHANGED, vcsPath);
     }
 
-    Reason getReason() {
-        return reason;
-    }
-
-    VCSPath getPath() {
-        return path;
-    }
-
     String toUserMessage() {
         switch (reason) {
             case ALREADY_EXISTS:
