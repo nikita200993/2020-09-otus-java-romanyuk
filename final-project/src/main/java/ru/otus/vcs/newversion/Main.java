@@ -13,11 +13,11 @@ import ru.otus.vcs.newversion.cli.Status;
 public class Main {
 
     public static void main(final String[] args) {
-        final var gitCLi = Cli.<Runnable>builder("simplegit")
+        final var gitCli = Cli.<Runnable>builder("simplegit")
                 .withDescription("version control system")
                 .withDefaultCommand(Help.class)
                 .withCommands(Init.class, Add.class, Remove.class, Branch.class, Checkout.class, Commit.class, Status.class)
                 .build();
-        gitCLi.parse(args).run();
+        gitCli.parse(args).run();
     }
 }
