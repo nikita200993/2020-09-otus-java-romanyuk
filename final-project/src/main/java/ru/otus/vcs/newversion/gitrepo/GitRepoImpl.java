@@ -1,7 +1,5 @@
 package ru.otus.vcs.newversion.gitrepo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.otus.utils.Contracts;
 import ru.otus.vcs.newversion.config.GitConfig;
 import ru.otus.vcs.newversion.index.Index;
@@ -19,7 +17,6 @@ import ru.otus.vcs.newversion.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
@@ -28,8 +25,6 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 
 public class GitRepoImpl implements GitRepository {
-
-    private static final Logger logger = LoggerFactory.getLogger(GitRepoImpl.class);
 
     private final Path repoRoot;
     private final GitConfig config;
