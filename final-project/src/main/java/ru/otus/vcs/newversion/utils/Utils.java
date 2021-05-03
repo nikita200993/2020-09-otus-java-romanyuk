@@ -129,6 +129,15 @@ public class Utils {
         }
     }
 
+    public static void createDirs(final Path path) {
+        Contracts.requireNonNullArgument(path);
+        try {
+            Files.createDirectories(path);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
     public static Path toReal(final Path path) {
         try {
             return path.toRealPath(LinkOption.NOFOLLOW_LINKS);
