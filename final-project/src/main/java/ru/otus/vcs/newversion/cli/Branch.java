@@ -3,7 +3,7 @@ package ru.otus.vcs.newversion.cli;
 import io.airlift.airline.Arguments;
 import io.airlift.airline.Command;
 
-@Command(name = "branch")
+@Command(name = "branch", description = "create new branch")
 public class Branch extends GitCommand {
 
     @Arguments(required = true)
