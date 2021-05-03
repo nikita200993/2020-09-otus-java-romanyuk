@@ -6,6 +6,7 @@ import ru.otus.vcs.newversion.path.VCSPath;
 import ru.otus.vcs.newversion.ref.BranchName;
 import ru.otus.vcs.newversion.ref.Ref;
 import ru.otus.vcs.newversion.ref.Sha1;
+import ru.otus.vcs.newversion.utils.Tuple2;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -18,7 +19,11 @@ public interface GitRepository {
 
     Path repoRealPath();
 
+    Tuple2<List<VCSFileChange>, MergeConflicts> startMerge(Ref ref);
+
     void abortMerge();
+
+    void finishMerge();
 
     void branch(BranchName branchName);
 

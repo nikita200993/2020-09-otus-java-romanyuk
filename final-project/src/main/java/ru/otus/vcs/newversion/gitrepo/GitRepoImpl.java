@@ -13,6 +13,7 @@ import ru.otus.vcs.newversion.ref.BranchName;
 import ru.otus.vcs.newversion.ref.Ref;
 import ru.otus.vcs.newversion.ref.ReservedRef;
 import ru.otus.vcs.newversion.ref.Sha1;
+import ru.otus.vcs.newversion.utils.Tuple2;
 import ru.otus.vcs.newversion.utils.Utils;
 
 import javax.annotation.Nullable;
@@ -89,6 +90,33 @@ public class GitRepoImpl implements GitRepository {
     @Override
     public Path repoRealPath() {
         return repoRoot;
+    }
+
+    @Override
+    public Tuple2<List<VCSFileChange>, MergeConflicts> startMerge(final Ref ref) {
+        Contracts.requireNonNullArgument(ref);
+
+        if (!(ref instanceof BranchName)) {
+            throw new UnsupportedOperationException();
+        }
+        checkMergeNotInProgress(() -> new GitRepositoryException("Finish previous merge."));
+        final var headCommit = readCommitOrNull(ReservedRef.head);
+        if (headCommit == null) {
+            throw new GitRepositoryException("No commits on current HEAD.");
+        }
+        checkNoChangesWithHead(getIndex(), () -> new GitRepositoryException("There are uncommitted changes."));
+        final var branchName = (BranchName) ref;
+        final var targetCommit = readCommitOrNull(branchName);
+        if (targetCommit == null) {
+            throw new GitRepositoryException("No commit for target branch " + branchName.getBranchName() + ".");
+        }
+
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void finishMerge() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
