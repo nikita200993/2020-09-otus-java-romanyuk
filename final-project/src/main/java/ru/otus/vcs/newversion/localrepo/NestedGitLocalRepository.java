@@ -10,6 +10,7 @@ import ru.otus.vcs.newversion.gitrepo.CommitMessage;
 import ru.otus.vcs.newversion.gitrepo.GitRepository;
 import ru.otus.vcs.newversion.gitrepo.GitRepositoryException;
 import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.BranchName;
 import ru.otus.vcs.newversion.ref.Ref;
 import ru.otus.vcs.newversion.utils.Utils;
 
@@ -157,6 +158,13 @@ public class NestedGitLocalRepository implements LocalRepository {
         } catch (final GitRepositoryException ex) {
             throw new LocalRepositoryException("Local repository checkout failed.", ex);
         }
+    }
+
+    @Override
+    public void branch(final BranchName branchName) {
+        Contracts.requireNonNullArgument(branchName);
+
+        gitRepo.branch(branchName);
     }
 
     @Override
