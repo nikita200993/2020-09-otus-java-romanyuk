@@ -393,13 +393,13 @@ public class GitRepoImpl implements GitRepository {
         return commit.sha1();
     }
 
-    private Sha1 commitSimple(final CommitMessage commitMessage, final Commit headCommit, final Index index) {
+    private Sha1 commitSimple(final CommitMessage commitMessage, final Commit headCommit, final Index staged) {
         final var tree = Contracts.ensureNonNull(readTreeOrNull(headCommit.getTreeSha()));
         final var headIndex = tree.index((sha) -> Contracts.ensureNonNull(readTreeOrNull(sha)));
-        if (headIndex.getFileDescriptors().equals(index.getFileDescriptors())) {
+        if (headIndex.getFileDescriptors().equals(staged.getFileDescriptors())) {
             throw new GitRepositoryException("Nothing to commit. No changes with head.");
         }
-        final var trees = Tree.createFromIndex(index);
+        final var trees = Tree.createFromIndex(staged);
         trees.forEach(this::saveGitObjectIfAbsent);
         final var commit = new Commit(
                 trees.get(0).sha1(),
@@ -444,13 +444,12 @@ public class GitRepoImpl implements GitRepository {
     }
 
     private Index indexFromTreeRef(final Sha1 sha1) {
-        logger.info("Reading tree with sha " + sha1.getHexString());
         return Contracts.ensureNonNull(readTreeOrNull(sha1))
                 .index((sha) -> Contracts.ensureNonNull(readTreeOrNull(sha)));
     }
 
     private boolean mergeInProgress() {
-        return Files.exists(repoRoot.resolve(RepositoryLayout.MERGE_HEAD), LinkOption.NOFOLLOW_LINKS);
+        return Utils.isRegularFileNoFollow(repoRoot.resolve(RepositoryLayout.MERGE_HEAD));
     }
 
     private Commit readCommitForUserProvidedRef(final Ref ref) {
