@@ -55,11 +55,12 @@ public class CommandProcessor {
         Contracts.requireNonNullArgument(stringPath);
 
         final var path = toPathOrThrowUserEx(stringPath);
-        if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+        final Path absPath = toAbsolute(path);
+        if (!Utils.isRegularFileNoFollow(absPath)) {
             throw new UserException("Regular file at path " + path + " doesn't exist.");
         }
         try {
-            final Path realPath = Utils.toReal(path);
+            final Path realPath = Utils.toReal(absPath);
             final var localRepo = findRepoOrThrow();
             localRepo.checkThatIsRepositoryPath(realPath);
             final var relativePath = localRepo.realRepoDir().relativize(realPath);
@@ -82,34 +83,25 @@ public class CommandProcessor {
     public void remove(final String stringPath, final RemoveOption removeOption) {
         Contracts.requireNonNullArgument(stringPath);
 
-        final Path absolutePath;
         final var path = toPathOrThrowUserEx(stringPath);
         final var localRepo = findRepoOrThrow();
-        if (!path.isAbsolute()) {
-            absolutePath = currentWorkingDir.resolve(path);
-        } else {
-            absolutePath = path;
-        }
-        try {
-            localRepo.checkThatIsRepositoryPath(absolutePath);
-            final Path relativePath = localRepo.realRepoDir().relativize(absolutePath);
-            checkThatValidVCSPath(relativePath, absolutePath);
-            final VCSPath vcsPath = VCSPath.create(relativePath);
-            switch (removeOption) {
-                case Normal:
-                    localRepo.remove(vcsPath);
-                    return;
-                case Force:
-                    localRepo.removeForcibly(vcsPath);
-                    return;
-                case Cached:
-                    localRepo.removeFromIndex(vcsPath);
-                    return;
-                default:
-                    throw Contracts.unreachable();
-            }
-        } catch (final LocalRepositoryException ex) {
-            throw new UserException("Error while removing file at path = " + absolutePath + ".", ex);
+        final Path absolutePath = toAbsolute(path);
+        localRepo.checkThatIsRepositoryPath(absolutePath);
+        final Path relativePath = localRepo.realRepoDir().relativize(absolutePath);
+        checkThatValidVCSPath(relativePath, absolutePath);
+        final VCSPath vcsPath = VCSPath.create(relativePath);
+        switch (removeOption) {
+            case Normal:
+                localRepo.remove(vcsPath);
+                return;
+            case Force:
+                localRepo.removeForcibly(vcsPath);
+                return;
+            case Cached:
+                localRepo.removeFromIndex(vcsPath);
+                return;
+            default:
+                throw Contracts.unreachable();
         }
     }
 
@@ -230,5 +222,13 @@ public class CommandProcessor {
             throw new UserException("Can't checkout internal ref " + refString + ".");
         }
         return Ref.create(refString);
+    }
+
+    private Path toAbsolute(final Path path) {
+        if (path.isAbsolute()) {
+            return path;
+        } else {
+            return currentWorkingDir.resolve(path);
+        }
     }
 }
