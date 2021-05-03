@@ -11,7 +11,7 @@ public interface LocalRepository {
 
     Path realRepoDir();
 
-    void checkThatIsRepositoryPath(Path absolutePath) throws LocalRepositoryException;
+    void checkThatIsRepositoryPath(Path absolutePath);
 
     void add(VCSPath path);
 
