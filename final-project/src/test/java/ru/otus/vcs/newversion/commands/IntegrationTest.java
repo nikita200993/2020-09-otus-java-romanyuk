@@ -11,7 +11,6 @@ import ru.otus.vcs.newversion.utils.Utils;
 import java.io.File;
 import java.nio.file.Path;
 
-import static java.lang.System.lineSeparator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
