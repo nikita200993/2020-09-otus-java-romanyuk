@@ -70,6 +70,15 @@ public class CommandProcessor {
         }
     }
 
+    public void branch(final String branchName) {
+        Contracts.requireNonNullArgument(branchName);
+
+        if (!BranchName.isValidBranchName(branchName)) {
+            throw new UserException("Bad branch name = " + branchName);
+        }
+        findRepoOrThrow().branch(BranchName.create(branchName));
+    }
+
     public void remove(final String stringPath, final RemoveOption removeOption) {
         Contracts.requireNonNullArgument(stringPath);
 
