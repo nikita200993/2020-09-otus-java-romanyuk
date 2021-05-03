@@ -1,17 +1,17 @@
 package ru.otus.vcs.newversion.localrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.index.Index;
-import ru.otus.vcs.index.diff.Addition;
-import ru.otus.vcs.index.diff.Deletion;
-import ru.otus.vcs.index.diff.Modification;
-import ru.otus.vcs.index.diff.VCSFileChange;
+import ru.otus.vcs.newversion.index.Index;
+import ru.otus.vcs.newversion.index.diff.Addition;
+import ru.otus.vcs.newversion.index.diff.Deletion;
+import ru.otus.vcs.newversion.index.diff.Modification;
+import ru.otus.vcs.newversion.index.diff.VCSFileChange;
 import ru.otus.vcs.newversion.gitrepo.CommitMessage;
 import ru.otus.vcs.newversion.gitrepo.GitRepository;
 import ru.otus.vcs.newversion.gitrepo.GitRepositoryException;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.Ref;
-import ru.otus.vcs.utils.Utils;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.Ref;
+import ru.otus.vcs.newversion.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

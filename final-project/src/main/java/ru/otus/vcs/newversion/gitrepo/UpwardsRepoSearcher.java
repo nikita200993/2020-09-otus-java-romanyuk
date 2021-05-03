@@ -1,7 +1,7 @@
 package ru.otus.vcs.newversion.gitrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.utils.Utils;
+import ru.otus.vcs.newversion.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.nio.file.Files;

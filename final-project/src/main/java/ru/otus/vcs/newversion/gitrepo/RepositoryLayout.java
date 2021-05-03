@@ -1,8 +1,8 @@
 package ru.otus.vcs.newversion.gitrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.config.GitConfig;
-import ru.otus.vcs.utils.Utils;
+import ru.otus.vcs.newversion.config.GitConfig;
+import ru.otus.vcs.newversion.utils.Utils;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,8 +13,8 @@ import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createDirectory;
 import static java.nio.file.Files.createFile;
 import static java.nio.file.Files.writeString;
-import static ru.otus.vcs.utils.Utils.isDirectoryNoFollow;
-import static ru.otus.vcs.utils.Utils.isRegularFileNoFollow;
+import static ru.otus.vcs.newversion.utils.Utils.isDirectoryNoFollow;
+import static ru.otus.vcs.newversion.utils.Utils.isRegularFileNoFollow;
 
 class RepositoryLayout {
 

@@ -1,6 +1,6 @@
 package ru.otus.vcs.newversion.gitrepo;
 
-import ru.otus.vcs.exception.GitException;
+import ru.otus.vcs.newversion.exception.GitException;
 
 public class GitRepositoryException extends GitException {
     public GitRepositoryException(final String message) {

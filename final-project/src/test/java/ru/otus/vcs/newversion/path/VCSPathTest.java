@@ -1,4 +1,4 @@
-package ru.otus.vcs.path;
+package ru.otus.vcs.newversion.path;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

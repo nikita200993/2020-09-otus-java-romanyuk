@@ -1,14 +1,14 @@
-package ru.otus.vcs.index;
+package ru.otus.vcs.newversion.index;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import ru.otus.vcs.index.diff.Addition;
-import ru.otus.vcs.index.diff.Deletion;
-import ru.otus.vcs.index.diff.Modification;
-import ru.otus.vcs.path.VCSFileDesc;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.Sha1;
+import ru.otus.vcs.newversion.index.diff.Addition;
+import ru.otus.vcs.newversion.index.diff.Deletion;
+import ru.otus.vcs.newversion.index.diff.Modification;
+import ru.otus.vcs.newversion.path.VCSFileDesc;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.Sha1;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

@@ -1,17 +1,20 @@
 package ru.otus.vcs.newversion.commands;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.exception.UserException;
+import ru.otus.vcs.newversion.exception.UserException;
 import ru.otus.vcs.newversion.gitrepo.CommitMessage;
-import ru.otus.vcs.newversion.gitrepo.GitRepoFactory;
+import ru.otus.vcs.newversion.gitrepo.GitRepositoryFactory;
+import ru.otus.vcs.newversion.gitrepo.UpwardsRepoSearcher;
+import ru.otus.vcs.newversion.localrepo.LocalRepoStatus;
 import ru.otus.vcs.newversion.localrepo.LocalRepository;
 import ru.otus.vcs.newversion.localrepo.LocalRepositoryException;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.BranchName;
-import ru.otus.vcs.ref.Ref;
-import ru.otus.vcs.ref.ReservedRef;
-import ru.otus.vcs.ref.Sha1;
-import ru.otus.vcs.utils.Utils;
+import ru.otus.vcs.newversion.localrepo.NestedGitLocalRepository;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.BranchName;
+import ru.otus.vcs.newversion.ref.Ref;
+import ru.otus.vcs.newversion.ref.ReservedRef;
+import ru.otus.vcs.newversion.ref.Sha1;
+import ru.otus.vcs.newversion.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.nio.file.Files;
@@ -21,19 +24,19 @@ import java.nio.file.Path;
 
 public class CommandProcessor {
 
-    private final GitRepoFactory gitRepoFactory;
+    private final GitRepositoryFactory gitRepositoryFactory;
     private final Path currentWorkingDir;
 
-    public CommandProcessor(final GitRepoFactory gitRepoFactory) {
-        this(gitRepoFactory, Path.of(""));
+    public CommandProcessor(final GitRepositoryFactory gitRepositoryFactory) {
+        this(gitRepositoryFactory, Path.of(""));
     }
 
-    public CommandProcessor(final GitRepoFactory gitRepoFactory, final Path path) {
-        Contracts.requireNonNullArgument(gitRepoFactory);
+    public CommandProcessor(final GitRepositoryFactory gitRepositoryFactory, final Path path) {
+        Contracts.requireNonNullArgument(gitRepositoryFactory);
         Contracts.requireNonNullArgument(path);
         Contracts.requireThat(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS));
 
-        this.gitRepoFactory = gitRepoFactory;
+        this.gitRepositoryFactory = gitRepositoryFactory;
         this.currentWorkingDir = Utils.toReal(path);
     }
 
@@ -45,7 +48,7 @@ public class CommandProcessor {
             throw new UserException("Init error. Provided path " + stringPath + " is not an empty dir.");
         }
 
-        gitRepoFactory.createNew(path, false);
+        gitRepositoryFactory.createNew(path, false);
     }
 
     public void add(final String stringPath) {
@@ -67,7 +70,7 @@ public class CommandProcessor {
         }
     }
 
-    public void remove(final String stringPath) {
+    public void remove(final String stringPath, final RemoveOption removeOption) {
         Contracts.requireNonNullArgument(stringPath);
 
         final Path absolutePath;
@@ -78,12 +81,24 @@ public class CommandProcessor {
         } else {
             absolutePath = path;
         }
-
         try {
             localRepo.checkThatIsRepositoryPath(absolutePath);
             final Path relativePath = localRepo.realRepoDir().relativize(absolutePath);
             checkThatValidVCSPath(relativePath, absolutePath);
-            localRepo.remove(VCSPath.create(relativePath));
+            final VCSPath vcsPath = VCSPath.create(relativePath);
+            switch (removeOption) {
+                case Normal:
+                    localRepo.remove(vcsPath);
+                    return;
+                case Force:
+                    localRepo.removeForcibly(vcsPath);
+                    return;
+                case Cached:
+                    localRepo.removeFromIndex(vcsPath);
+                    return;
+                default:
+                    throw Contracts.unreachable();
+            }
         } catch (final LocalRepositoryException ex) {
             throw new UserException("Error while removing file at path = " + absolutePath + ".", ex);
         }
@@ -95,20 +110,12 @@ public class CommandProcessor {
         if (!CommitMessage.isValidMessage(message)) {
             throw new UserException("Bad format of message.");
         }
-        try {
-            findRepoOrThrow().commit(CommitMessage.create(message));
-        } catch (final LocalRepositoryException ex) {
-            throw new UserException("Commit error.", ex);
-        }
+        findRepoOrThrow().commit(CommitMessage.create(message));
     }
 
     public String status() {
-        final LocalRepository.StatusResult statusResult;
-        try {
-            statusResult = findRepoOrThrow().status();
-        } catch (final LocalRepositoryException ex) {
-            throw new UserException("Can't retrieve status.", ex);
-        }
+        final LocalRepoStatus statusResult;
+        statusResult = findRepoOrThrow().status();
         return statusResultToUserMessage(statusResult);
     }
 
@@ -117,11 +124,7 @@ public class CommandProcessor {
 
         final var ref = toRefOfThrowUserForCheckout(refString);
         final var repo = findRepoOrThrow();
-        try {
-            repo.checkout(ref);
-        } catch (final LocalRepositoryException ex) {
-            throw new UserException("Checkout error for " + refString + ".", ex);
-        }
+        repo.checkout(ref);
     }
 
     public void checkoutFile(final String refString, final String vcsPathString) {
@@ -135,15 +138,15 @@ public class CommandProcessor {
         }
         final var repo = findRepoOrThrow();
         final var vcsPath = VCSPath.create(path);
-        try {
-            repo.checkoutFile(ref, vcsPath);
-        } catch (final LocalRepositoryException ex) {
-            throw new UserException("Checkout error for " + refString + ".", ex);
-        }
+        repo.checkoutFile(ref, vcsPath);
     }
 
-    public LocalRepository findRepoOrThrow() {
-        throw new UnsupportedOperationException();
+    private LocalRepository findRepoOrThrow() {
+        final var gitRep = new UpwardsRepoSearcher(currentWorkingDir, gitRepositoryFactory).find(false);
+        if (gitRep == null) {
+            throw new UserException("Can't find repository searching upwards from " + currentWorkingDir);
+        }
+        return new NestedGitLocalRepository(gitRep);
     }
 
     private static void checkThatValidVCSPath(final Path relativePath, final Path original) {
@@ -162,9 +165,9 @@ public class CommandProcessor {
         }
     }
 
-    private static String statusResultToUserMessage(final LocalRepository.StatusResult statusResult) {
+    private static String statusResultToUserMessage(final LocalRepoStatus status) {
         final var strBuilder = new StringBuilder();
-        @Nullable final var mergeConflicts = statusResult.getMergeConflicts();
+        @Nullable final var mergeConflicts = status.getMergeConflicts();
         if (mergeConflicts != null) {
             strBuilder.append("There merge conflicts on receiver(HEAD) ")
                     .append(getUserMessageForRef(mergeConflicts.getReceiver()))
@@ -172,31 +175,25 @@ public class CommandProcessor {
                     .append(getUserMessageForRef(mergeConflicts.getGiver()))
                     .append(". Below conflicting paths:")
                     .append(System.lineSeparator());
-            for (final var path : mergeConflicts.getConflictingChanges()) {
-                strBuilder.append(path.toOsPath())
+            for (final var modification : mergeConflicts.getConflictingChanges()) {
+                strBuilder.append(modification.getChangePath())
                         .append(System.lineSeparator());
             }
         }
-        if (!statusResult.getUntrackedFiles().isEmpty()) {
-            strBuilder.append("Untracked files:")
-                    .append(System.lineSeparator());
-            for (final var path : statusResult.getUntrackedFiles()) {
-                strBuilder.append(path.toOsPath())
-                        .append(System.lineSeparator());
-            }
-        }
-        if (!statusResult.getLocalChanges().isEmpty()) {
+        final var localFileChanges = status.getLocalFileChanges();
+        if (!localFileChanges.isEmpty()) {
             strBuilder.append("Local changes:")
                     .append(System.lineSeparator());
-            for (final var change : statusResult.getLocalChanges()) {
+            for (final var change : localFileChanges) {
                 strBuilder.append(change)
                         .append(System.lineSeparator());
             }
         }
-        if (!statusResult.getUncommittedStagedChanges().isEmpty()) {
+        final var uncommittedChanges = status.getUncommittedChanges();
+        if (!uncommittedChanges.isEmpty()) {
             strBuilder.append("Staged for commit:")
                     .append(System.lineSeparator());
-            for (final var change : statusResult.getUncommittedStagedChanges()) {
+            for (final var change : uncommittedChanges) {
                 strBuilder.append(change)
                         .append(System.lineSeparator());
             }
@@ -223,7 +220,6 @@ public class CommandProcessor {
         } else if (ReservedRef.mergeHead.getRefString().equals(refString)) {
             throw new UserException("Can't checkout internal ref " + refString + ".");
         }
-        final var ref = Ref.create(refString);
-        return ref;
+        return Ref.create(refString);
     }
 }

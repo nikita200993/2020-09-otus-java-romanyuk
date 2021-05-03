@@ -1,7 +1,7 @@
 package ru.otus.vcs.newversion.localrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.path.VCSPath;
+import ru.otus.vcs.newversion.path.VCSPath;
 
 class LocalConflict {
 

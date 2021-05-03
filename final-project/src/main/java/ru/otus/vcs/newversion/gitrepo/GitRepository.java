@@ -1,11 +1,11 @@
 package ru.otus.vcs.newversion.gitrepo;
 
-import ru.otus.vcs.index.Index;
-import ru.otus.vcs.index.diff.VCSFileChange;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.BranchName;
-import ru.otus.vcs.ref.Ref;
-import ru.otus.vcs.ref.Sha1;
+import ru.otus.vcs.newversion.index.Index;
+import ru.otus.vcs.newversion.index.diff.VCSFileChange;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.BranchName;
+import ru.otus.vcs.newversion.ref.Ref;
+import ru.otus.vcs.newversion.ref.Sha1;
 
 import java.nio.file.Path;
 import java.util.List;

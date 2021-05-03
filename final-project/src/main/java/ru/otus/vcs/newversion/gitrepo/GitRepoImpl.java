@@ -1,19 +1,19 @@
 package ru.otus.vcs.newversion.gitrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.config.GitConfig;
-import ru.otus.vcs.index.Index;
-import ru.otus.vcs.index.diff.VCSFileChange;
-import ru.otus.vcs.objects.Blob;
-import ru.otus.vcs.objects.Commit;
-import ru.otus.vcs.objects.GitObject;
-import ru.otus.vcs.objects.Tree;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.BranchName;
-import ru.otus.vcs.ref.Ref;
-import ru.otus.vcs.ref.ReservedRef;
-import ru.otus.vcs.ref.Sha1;
-import ru.otus.vcs.utils.Utils;
+import ru.otus.vcs.newversion.config.GitConfig;
+import ru.otus.vcs.newversion.index.Index;
+import ru.otus.vcs.newversion.index.diff.VCSFileChange;
+import ru.otus.vcs.newversion.objects.Blob;
+import ru.otus.vcs.newversion.objects.Commit;
+import ru.otus.vcs.newversion.objects.GitObject;
+import ru.otus.vcs.newversion.objects.Tree;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.BranchName;
+import ru.otus.vcs.newversion.ref.Ref;
+import ru.otus.vcs.newversion.ref.ReservedRef;
+import ru.otus.vcs.newversion.ref.Sha1;
+import ru.otus.vcs.newversion.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.nio.file.Files;

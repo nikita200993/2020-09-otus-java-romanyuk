@@ -1,12 +1,12 @@
-package ru.otus.vcs.objects;
+package ru.otus.vcs.newversion.objects;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.otus.vcs.index.Index;
-import ru.otus.vcs.index.IndexEntry;
-import ru.otus.vcs.path.VCSFileName;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.Sha1;
+import ru.otus.vcs.newversion.index.Index;
+import ru.otus.vcs.newversion.index.IndexEntry;
+import ru.otus.vcs.newversion.path.VCSFileName;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.Sha1;
 
 import java.util.List;
 

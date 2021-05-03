@@ -1,7 +1,7 @@
 package ru.otus.vcs.newversion.localrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.index.diff.VCSFileChange;
+import ru.otus.vcs.newversion.index.diff.VCSFileChange;
 import ru.otus.vcs.newversion.gitrepo.GitRepoStatus;
 import ru.otus.vcs.newversion.gitrepo.MergeConflicts;
 

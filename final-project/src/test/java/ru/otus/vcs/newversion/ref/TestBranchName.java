@@ -1,4 +1,4 @@
-package ru.otus.vcs.ref;
+package ru.otus.vcs.newversion.ref;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;

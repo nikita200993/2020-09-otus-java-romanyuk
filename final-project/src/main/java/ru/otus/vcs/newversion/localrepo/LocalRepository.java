@@ -1,8 +1,8 @@
 package ru.otus.vcs.newversion.localrepo;
 
 import ru.otus.vcs.newversion.gitrepo.CommitMessage;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.Ref;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.Ref;
 
 import java.nio.file.Path;
 

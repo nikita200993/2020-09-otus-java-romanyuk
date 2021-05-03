@@ -1,10 +1,10 @@
-package ru.otus.vcs.index;
+package ru.otus.vcs.newversion.index;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.otus.vcs.path.VCSPath;
-import ru.otus.vcs.ref.Sha1;
+import ru.otus.vcs.newversion.path.VCSPath;
+import ru.otus.vcs.newversion.ref.Sha1;
 
 public class IndexEntryTest {
 

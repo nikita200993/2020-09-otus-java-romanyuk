@@ -1,10 +1,10 @@
 package ru.otus.vcs.newversion.gitrepo;
 
 import ru.otus.utils.Contracts;
-import ru.otus.vcs.index.diff.Modification;
-import ru.otus.vcs.ref.BranchName;
-import ru.otus.vcs.ref.Ref;
-import ru.otus.vcs.ref.Sha1;
+import ru.otus.vcs.newversion.index.diff.Modification;
+import ru.otus.vcs.newversion.ref.BranchName;
+import ru.otus.vcs.newversion.ref.Ref;
+import ru.otus.vcs.newversion.ref.Sha1;
 
 import java.util.List;
 

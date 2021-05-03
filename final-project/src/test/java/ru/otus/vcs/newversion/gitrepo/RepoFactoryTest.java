@@ -3,7 +3,7 @@ package ru.otus.vcs.newversion.gitrepo;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import ru.otus.vcs.utils.Utils;
+import ru.otus.vcs.newversion.utils.Utils;
 
 import java.io.IOException;
 import java.nio.file.Files;

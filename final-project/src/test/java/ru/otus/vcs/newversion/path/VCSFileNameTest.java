@@ -1,9 +1,9 @@
-package ru.otus.vcs.path;
+package ru.otus.vcs.newversion.path;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static ru.otus.vcs.path.VCSFileName.isValidVCSFileName;
+import static ru.otus.vcs.newversion.path.VCSFileName.isValidVCSFileName;
 
 public class VCSFileNameTest {
 
