@@ -27,6 +27,8 @@ public interface LocalRepository {
 
     void branch(BranchName branchName);
 
+    boolean merge(Ref ref);
+
     void checkoutFile(Ref ref, VCSPath path);
 
     LocalRepoStatus status();

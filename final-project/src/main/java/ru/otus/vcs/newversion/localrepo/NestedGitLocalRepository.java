@@ -17,14 +17,17 @@ import ru.otus.vcs.newversion.utils.Utils;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 public class NestedGitLocalRepository implements LocalRepository {
@@ -168,6 +171,37 @@ public class NestedGitLocalRepository implements LocalRepository {
     }
 
     @Override
+    public boolean merge(final Ref ref) {
+        Contracts.requireNonNullArgument(ref);
+        if (!(ref instanceof BranchName)) {
+            throw new UnsupportedOperationException();
+        }
+        final var branchName = (BranchName) ref;
+        final var changes = gitRepo.startMerge(branchName);
+        final var nonConflictChanges = Contracts.ensureNonNull(changes.first());
+        final List<Modification> conflictChanges = changes.second() == null
+                ? emptyList()
+                : changes.second().getConflictingChanges();
+        final var allChanges = new ArrayList<>(nonConflictChanges);
+        allChanges.addAll(conflictChanges);
+        final var localConflicts = localConflicts(allChanges);
+        if (localConflicts.isEmpty()) {
+            writeChanges(nonConflictChanges);
+            writeConflicts(conflictChanges, branchName);
+            if (localConflicts.isEmpty()) {
+                gitRepo.finishMerge();
+            }
+            return conflictChanges.isEmpty();
+        } else {
+            gitRepo.abortMerge();
+            throw new LocalRepositoryException(
+                    "Aborting merge. Local conflicts prevent checkout. Conflicts:" + System.lineSeparator()
+                            + getMessageForUser(localConflicts)
+            );
+        }
+    }
+
+    @Override
     public void checkoutFile(final Ref ref, final VCSPath vcsPath) {
         Contracts.requireNonNullArgument(ref);
         Contracts.requireNonNullArgument(vcsPath);
@@ -279,6 +313,25 @@ public class NestedGitLocalRepository implements LocalRepository {
             } else {
                 throw Contracts.unreachable();
             }
+        }
+    }
+
+    private void writeConflicts(final List<Modification> conflictChanges, final BranchName branchName) {
+        for (final var modification : conflictChanges) {
+            final byte[] headData = gitRepo.readFile(modification.getOriginalSha());
+            final byte[] targetData = gitRepo.readFile(modification.getModifiedFileDesc().getSha());
+            final String header = "<<<<<< HEAD\n";
+            final String delimeter = ">>>>>> " + branchName.getBranchName() + "\n";
+            final byte[] result = Utils.concat(
+                    List.of(
+                            header.getBytes(StandardCharsets.UTF_8),
+                            headData,
+                            delimeter.getBytes(StandardCharsets.UTF_8),
+                            targetData
+                    )
+            );
+            final Path pathToFile = resolveVCSPath(modification.getChangePath());
+            Utils.writeBytes(pathToFile, result);
         }
     }
 }
