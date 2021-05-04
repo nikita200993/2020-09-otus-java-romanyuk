@@ -225,8 +225,14 @@ public class NestedGitLocalRepository implements LocalRepository {
     public LocalRepoStatus status() {
         final var stagedIndex = gitRepo.getIndex();
         final var localIndex = Index.create(repoPath, gitRepo::hash);
-        final var localChanges = localIndex.getDiff(stagedIndex);
-        return new LocalRepoStatus(gitRepo.status(), localChanges);
+        final var localChanges = localIndex.getDiff(stagedIndex.withDroppedConflicts());
+        final var correctedLocalChanges = new ArrayList<VCSFileChange>();
+        for (final var change : localChanges) {
+            if (!stagedIndex.inConflict(change.getChangePath())) {
+                correctedLocalChanges.add(change);
+            }
+        }
+        return new LocalRepoStatus(gitRepo.status(), correctedLocalChanges);
     }
 
     private static String getMessageForUser(final List<LocalConflict> localConflicts) {
