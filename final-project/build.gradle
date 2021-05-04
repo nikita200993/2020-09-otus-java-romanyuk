@@ -1,0 +1,38 @@
+plugins {
+    id "java"
+    id 'com.github.johnrengelman.shadow'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+    implementation "io.airlift:airline"
+    implementation "commons-codec:commons-codec"
+    implementation "ch.qos.logback:logback-classic"
+    implementation project(":utils")
+    implementation("com.google.guava:guava")
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.assertj:assertj-core"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.mockito:mockito-junit-jupiter"
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "failed"
+    }
+}
+
+shadowJar {
+    archiveBaseName.set('simplegit')
+    archiveVersion.set('0.1')
+    archiveClassifier.set('')
+    manifest {
+        attributes 'Main-Class': 'ru.otus.vcs.newversion.Main'
+    }
+}
