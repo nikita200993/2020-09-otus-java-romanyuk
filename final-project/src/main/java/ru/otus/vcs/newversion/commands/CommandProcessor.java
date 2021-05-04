@@ -80,6 +80,14 @@ public class CommandProcessor {
         findRepoOrThrow().branch(BranchName.create(branchName));
     }
 
+    public boolean merge(final String refString) {
+        Contracts.requireNonNullArgument(refString);
+
+        final var ref = toRefOfThrowUserForCheckout(refString);
+        final var repo = findRepoOrThrow();
+        return repo.merge(Ref.create(refString));
+    }
+
     public void remove(final String stringPath, final RemoveOption removeOption) {
         Contracts.requireNonNullArgument(stringPath);
 
