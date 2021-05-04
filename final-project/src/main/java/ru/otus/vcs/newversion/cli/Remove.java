@@ -10,8 +10,6 @@ import ru.otus.vcs.newversion.commands.RemoveOption;
 @Command(name = "rm", description = "removes file from index and fs.")
 public class Remove extends GitCommand {
 
-    private static final Logger logger = LoggerFactory.getLogger(Remove.class);
-
     @Arguments(required = true)
     private String stringPath;
     @Option(name = {"-f", "--force"})
@@ -22,7 +20,6 @@ public class Remove extends GitCommand {
 
     @Override
     public void execute() {
-        logger.info("Arguments path = {}, force = {}, cached = {}", stringPath, force, cached);
         final RemoveOption removeOption;
         if (force) {
             removeOption = RemoveOption.Force;

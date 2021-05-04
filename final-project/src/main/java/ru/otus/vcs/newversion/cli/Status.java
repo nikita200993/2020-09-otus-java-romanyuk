@@ -7,6 +7,9 @@ public class Status extends GitCommand {
 
     @Override
     public void execute() {
-        System.out.println(commandProcessor.status());
+        final String message = commandProcessor.status();
+        if (!message.isBlank()) {
+            System.out.println(message);
+        }
     }
 }

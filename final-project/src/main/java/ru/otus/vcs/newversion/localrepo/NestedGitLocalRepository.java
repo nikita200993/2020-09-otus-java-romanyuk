@@ -188,7 +188,7 @@ public class NestedGitLocalRepository implements LocalRepository {
         if (localConflicts.isEmpty()) {
             writeChanges(nonConflictChanges);
             writeConflicts(conflictChanges, branchName);
-            if (localConflicts.isEmpty()) {
+            if (conflictChanges.isEmpty()) {
                 gitRepo.finishMerge();
             }
             return conflictChanges.isEmpty();
