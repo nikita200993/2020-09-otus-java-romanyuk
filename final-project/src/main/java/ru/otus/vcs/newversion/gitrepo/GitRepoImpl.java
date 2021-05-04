@@ -3,11 +3,14 @@ package ru.otus.vcs.newversion.gitrepo;
 import ru.otus.utils.Contracts;
 import ru.otus.vcs.newversion.config.GitConfig;
 import ru.otus.vcs.newversion.index.Index;
+import ru.otus.vcs.newversion.index.diff.Addition;
+import ru.otus.vcs.newversion.index.diff.Modification;
 import ru.otus.vcs.newversion.index.diff.VCSFileChange;
 import ru.otus.vcs.newversion.objects.Blob;
 import ru.otus.vcs.newversion.objects.Commit;
 import ru.otus.vcs.newversion.objects.GitObject;
 import ru.otus.vcs.newversion.objects.Tree;
+import ru.otus.vcs.newversion.path.VCSFileDesc;
 import ru.otus.vcs.newversion.path.VCSPath;
 import ru.otus.vcs.newversion.ref.BranchName;
 import ru.otus.vcs.newversion.ref.Ref;
@@ -19,11 +22,15 @@ import ru.otus.vcs.newversion.utils.Utils;
 import javax.annotation.Nullable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Supplier;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 public class GitRepoImpl implements GitRepository {
 
@@ -110,13 +117,47 @@ public class GitRepoImpl implements GitRepository {
         if (targetCommit == null) {
             throw new GitRepositoryException("No commit for target branch " + branchName.getBranchName() + ".");
         }
-
-        throw new UnsupportedOperationException();
+        if (targetCommit.sha1().equals(headCommit.sha1())) {
+            throw new GitRepositoryException("Target branch commit is the same as head");
+        }
+        final var parentsOfHead = getAllParents(headCommit);
+        final var parentsOfTarget = getAllParents(targetCommit);
+        if (parentsOfHead.contains(targetCommit.sha1())) {
+            throw new GitRepositoryException("Current head is ahead of target.");
+        }
+        if (parentsOfTarget.contains(headCommit.sha1())) {
+            return new Tuple2<>(startFastForwardMerge(headCommit, targetCommit), null);
+        }
+        Sha1 firstCommonParent = null;
+        for (final var parentSha : parentsOfHead) {
+            if (parentsOfTarget.contains(parentSha)) {
+                firstCommonParent = parentSha;
+                break;
+            }
+        }
+        Contracts.requireNonNullArgument(firstCommonParent);
+        final var baseCommit = Contracts.ensureNonNull(readCommitOrNull(firstCommonParent));
+        return startLinearMerge(baseCommit, headCommit, targetCommit);
     }
 
     @Override
     public void finishMerge() {
-        throw new UnsupportedOperationException();
+        final var headCommit = Contracts.ensureNonNull(readCommitOrNull(ReservedRef.head));
+        final var mergeHeadCommit = Contracts.ensureNonNull(readCommitOrNull(ReservedRef.mergeHead));
+        final var index = getIndex();
+        Contracts.forbidThat(index.hasMergeConflict());
+        final var trees = Tree.createFromIndex(index);
+        trees.forEach(this::saveGitObjectIfAbsent);
+        final var newCommit = new Commit(
+                trees.get(0).sha1(),
+                headCommit.sha1(),
+                mergeHeadCommit.sha1(),
+                config.get(GitConfig.USER),
+                CommitMessage.create("Merge " + headCommit.sha1().getHexString() + " and " + mergeHeadCommit.sha1().getHexString() + ".")
+        );
+        saveGitObjectIfAbsent(newCommit);
+        Utils.delete(repoRoot.resolve(RepositoryLayout.MERGE_HEAD));
+        updateHeadAfterCommit(newCommit.sha1());
     }
 
     @Override
@@ -531,6 +572,107 @@ public class GitRepoImpl implements GitRepository {
             Utils.writeUtf8(headPath, branchName + "\n");
         } else {
             throw Contracts.unreachable();
+        }
+    }
+
+    private LinkedHashSet<Sha1> getAllParents(final Commit commit) {
+        final var result = new LinkedHashSet<Sha1>();
+        final var queue = new ArrayDeque<Commit>();
+        queue.add(commit);
+        while (!queue.isEmpty()) {
+            final var curCommit = queue.removeFirst();
+            final var sha = curCommit.sha1();
+            if (result.contains(sha)) {
+                continue;
+            }
+            result.add(sha);
+            if (curCommit.getFirstParentSha() != null) {
+                final var parent = Contracts.ensureNonNull(readCommitOrNull(curCommit.getFirstParentSha()));
+                queue.addLast(parent);
+            }
+            if (curCommit.getSecondParentSha() != null) {
+                final var parent = Contracts.ensureNonNull(readCommitOrNull(curCommit.getSecondParentSha()));
+                queue.addLast(parent);
+            }
+        }
+        return result;
+    }
+
+    private List<VCSFileChange> startFastForwardMerge(final Commit headCommit, final Commit targetHead) {
+        final var targetIndex = indexFromTreeRef(targetHead.getTreeSha());
+        final var headIndex = indexFromTreeRef(headCommit.getTreeSha());
+        final var diff = targetIndex.getDiff(headIndex);
+        final var mergeHead = repoRoot.resolve(RepositoryLayout.MERGE_HEAD);
+        saveIndex(targetIndex);
+        Utils.writeUtf8(mergeHead, targetHead.sha1().getHexString() + "\n");
+        return diff;
+    }
+
+    private Tuple2<List<VCSFileChange>, MergeConflicts> startLinearMerge(
+            final Commit base,
+            final Commit receiver,
+            final Commit giver) {
+        final var baseIndex = indexFromTreeRef(base.getTreeSha());
+        final var receiverIndex = indexFromTreeRef(receiver.getTreeSha());
+        final var giverIndex = indexFromTreeRef(giver.getTreeSha());
+        final var changes = giverIndex.getDiff(receiverIndex);
+        final var additions = changes.stream()
+                .filter(Addition.class::isInstance)
+                .collect(toList());
+        final List<Modification> conflictingModifications = new ArrayList<>();
+        final List<Modification> nonConflictingModifications = new ArrayList<>();
+        for (final var fileDesc : receiverIndex.getFileDescriptors()) {
+            final var path = fileDesc.getPath();
+            if (!giverIndex.contains(path)) {
+                continue;
+            }
+            final var giverSha = giverIndex.getSha(fileDesc.getPath());
+            final var receiverSha = fileDesc.getSha();
+            if (receiverSha.equals(giverSha)) {
+                continue;
+            }
+            if (!baseIndex.contains(fileDesc.getPath())) {
+                conflictingModifications.add(new Modification(new VCSFileDesc(path, giverSha), receiverSha));
+            }
+            final var baseSha = baseIndex.getSha(path);
+            if (baseSha.equals(receiverSha)) {
+                nonConflictingModifications.add(new Modification(new VCSFileDesc(path, giverSha), receiverSha));
+            } else if (!baseSha.equals(giverSha)) {
+                conflictingModifications.add(new Modification(new VCSFileDesc(path, giverSha), receiverSha));
+            }
+        }
+        final var nonConflictingChanges = new ArrayList<>(additions);
+        nonConflictingChanges.addAll(nonConflictingModifications);
+        var indexToWrite = receiverIndex;
+        for (final var nonConflictChange : nonConflictingChanges) {
+            if (nonConflictChange instanceof Addition) {
+                final var addition = (Addition) nonConflictChange;
+                indexToWrite = indexToWrite.withNewIndexEntry(addition.getChangePath(), addition.getAddedFileDesc().getSha());
+            } else {
+                Contracts.requireThat(nonConflictChange instanceof Modification);
+                final var modification = (Modification) nonConflictChange;
+                indexToWrite = indexToWrite.withNewIndexEntry(
+                        modification.getChangePath(),
+                        modification.getModifiedFileDesc().getSha()
+                );
+            }
+        }
+        for (final var conflictModification : conflictingModifications) {
+            indexToWrite = indexToWrite.withNewConflict(
+                    conflictModification.getChangePath(),
+                    conflictModification.getOriginalSha(),
+                    conflictModification.getModifiedFileDesc().getSha()
+            );
+        }
+        saveIndex(indexToWrite);
+        Utils.writeUtf8(repoRoot.resolve(RepositoryLayout.MERGE_HEAD), giver.sha1().getHexString() + "\n");
+        if (conflictingModifications.isEmpty()) {
+            return new Tuple2<>(nonConflictingChanges, null);
+        } else {
+            return new Tuple2<>(
+                    nonConflictingChanges,
+                    new MergeConflicts(receiver.sha1(), giver.sha1(), conflictingModifications)
+            );
         }
     }
 }

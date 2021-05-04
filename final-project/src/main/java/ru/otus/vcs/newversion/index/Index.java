@@ -87,6 +87,15 @@ public class Index {
         }
     }
 
+    public Sha1 getSha(final VCSPath path) {
+        Contracts.requireNonNullArgument(path);
+
+        final var indexEntries = pathToIndexEntries.get(path);
+        Contracts.requireNonNull(indexEntries);
+        Contracts.requireThat(indexEntries.size() == 1);
+        return indexEntries.get(0).getSha();
+    }
+
     public Index withNewIndexEntry(final VCSPath path, final Sha1 sha) {
         Contracts.requireNonNullArgument(path);
         Contracts.requireNonNullArgument(sha);
@@ -102,6 +111,22 @@ public class Index {
             newMapping.put(path, List.of(newIndexEntry));
             return new Index(newMapping);
         }
+    }
+
+    public Index withNewConflict(final VCSPath path, final Sha1 receiverSha, final Sha1 giverSha) {
+        Contracts.requireNonNullArgument(path);
+        Contracts.requireNonNullArgument(receiverSha);
+        Contracts.requireNonNullArgument(giverSha);
+        Contracts.forbidThat(path.isRoot());
+        Contracts.forbidThat(receiverSha.equals(giverSha));
+
+        final var newIndexEntries = List.of(
+                new IndexEntry(Stage.receiver, path, receiverSha),
+                new IndexEntry(Stage.giver, path, giverSha)
+        );
+        final var newMapping = new LinkedHashMap<>(pathToIndexEntries);
+        newMapping.put(path, newIndexEntries);
+        return new Index(newMapping);
     }
 
     @Nullable
